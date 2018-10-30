@@ -52,9 +52,6 @@ public interface BoardCfg extends Entity {
     String getOwningUser();
     void setOwningUserKey(String name);
 
-
-
-
     @NotNull
     @StringLength(StringLength.UNLIMITED)
     String getConfigJson();
