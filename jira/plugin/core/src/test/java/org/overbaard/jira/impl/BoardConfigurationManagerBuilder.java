@@ -15,14 +15,14 @@
  */
 package org.overbaard.jira.impl;
 
-import static org.overbaard.jira.impl.Constants.CODE;
-import static org.overbaard.jira.impl.Constants.ID;
-import static org.overbaard.jira.impl.Constants.NAME;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.overbaard.jira.impl.Constants.CODE;
+import static org.overbaard.jira.impl.Constants.ID;
+import static org.overbaard.jira.impl.Constants.NAME;
 
 import java.beans.PropertyChangeListener;
 import java.io.BufferedInputStream;
@@ -32,10 +32,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.jboss.dmr.ModelNode;
+import org.junit.Assert;
 import org.overbaard.jira.api.BoardConfigurationManager;
 import org.overbaard.jira.impl.activeobjects.BoardCfg;
 import org.overbaard.jira.impl.activeobjects.Setting;
-import org.junit.Assert;
 
 import com.atlassian.activeobjects.external.ActiveObjects;
 import com.atlassian.jira.avatar.AvatarService;

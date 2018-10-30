@@ -56,4 +56,7 @@ public interface BoardCfg extends Entity {
     @StringLength(StringLength.UNLIMITED)
     String getConfigJson();
     void setConfigJson(String json);
+
+    BoardCfgTemplate getBoardCfgTemplate();
+    void setBoardCfgTemplate(BoardCfgTemplate template);
 }

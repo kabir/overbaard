@@ -1,6 +1,7 @@
 package org.overbaard.jira.impl.activeobjects;
 
 import net.java.ao.Entity;
+import net.java.ao.OneToMany;
 import net.java.ao.schema.NotNull;
 import net.java.ao.schema.StringLength;
 import net.java.ao.schema.Unique;
@@ -23,4 +24,6 @@ public interface BoardCfgTemplate extends Entity {
     String getConfigJson();
     void setConfigJson(String json);
 
+    @OneToMany
+    BoardCfg[] getBoardCfgs();
 }
