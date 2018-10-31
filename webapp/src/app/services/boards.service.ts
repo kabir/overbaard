@@ -19,7 +19,7 @@ BoardsService {
       summaryOnly ? UrlService.OVERBAARD_REST_PREFIX + '/boards' : UrlService.OVERBAARD_REST_PREFIX + '/boards?full=true');
     return this.executeRequest(progress, this._httpClient.get(path))
       .pipe(
-        map(r => summaryOnly ? r['configs'] : r)
+        map(r => summaryOnly ? r['boards'] : r)
       );
   }
 

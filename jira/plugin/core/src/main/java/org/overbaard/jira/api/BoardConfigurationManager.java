@@ -34,11 +34,9 @@ public interface BoardConfigurationManager {
      * the view, but does not throw any permission exceptions.
      *
      * @param user      the logged in user
-     * @param forConfig whether this is to edit/view the config (in which case we return everything),
-     *                  or to display the list of boards in view mode (in which case we return id/name pairs)
      * @return the json for the boards
      */
-    String getBoardsJson(ApplicationUser user, boolean forConfig);
+    String getBoardsConfigurations(ApplicationUser user);
 
     /**
      * Saves a new board (if {@code id < 0}, or updates an exisiting one. Permissions are checked to see if the user

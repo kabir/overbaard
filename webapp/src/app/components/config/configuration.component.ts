@@ -223,7 +223,7 @@ export class ConfigurationComponent implements OnInit {
 
   private toConfigBoardView(data: any): ConfigBoardsView {
     const boards: OrderedMap<number, any> =
-      (<any[]>data['configs'])
+      (<any[]>data['boards'])
         .reduce((om, boardCfg) => om.set(boardCfg['id'], boardCfg), OrderedMap<number, any>());
 
     return {

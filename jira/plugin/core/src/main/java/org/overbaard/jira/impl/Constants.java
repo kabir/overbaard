@@ -28,6 +28,7 @@ public class Constants {
     public static final String BOARD_ID = "board_id";
     public static final String BOARDS = "boards";
     public static final String CAN_EDIT_CUSTOM_FIELDS = "can-edit-custom-fields";
+    public static final String CONFIG = "config";
     public static final String CODE = "code";
     public static final String CHANGE_TYPE = "change_type";
     public static final String CHANGES = "changes";
@@ -37,8 +38,6 @@ public class Constants {
     public static final String CLEAR_LABELS = "clear-labels";
     public static final String COLOUR = "colour";
     public static final String COMPONENTS = "components";
-    public static final String CONFIGS = "configs";
-    public static final String CONFIG = "config";
     public static final String CURRENT_BOARD = "current-board";
     public static final String CURRENT_BOARD_LAST_LOGGED_ACCESS = "current-board-time";
     public static final String CURRENT_USER = "current-user";
@@ -62,7 +61,6 @@ public class Constants {
     public static final String HEADER = "header";
     public static final String HEADERS = "headers";
     public static final String HELP = "help";
-    public static final String ICON = "icon";
     public static final String ID = "id";
     public static final String INDEX = "index";
     public static final String ISSUE_TYPES = "issue-types";

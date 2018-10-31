@@ -71,7 +71,7 @@ public class OverbaardFacadeImpl implements JiraFacade, InitializingBean, Dispos
 
     @Override
     public String getBoardConfigurations(ApplicationUser user) {
-        return boardConfigurationManager.getBoardsJson(user, true);
+        return boardConfigurationManager.getBoardsConfigurations(user);
     }
 
     @Override
@@ -124,7 +124,7 @@ public class OverbaardFacadeImpl implements JiraFacade, InitializingBean, Dispos
 
     @Override
     public String getBoardsForDisplay(ApplicationUser user) {
-        return boardConfigurationManager.getBoardsJson(user, false);
+        return boardConfigurationManager.getBoardsConfigurations(user);
     }
 
     @Override

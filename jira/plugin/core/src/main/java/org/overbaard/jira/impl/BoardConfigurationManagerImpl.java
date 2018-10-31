@@ -15,13 +15,13 @@
  */
 package org.overbaard.jira.impl;
 
+import static org.overbaard.jira.impl.Constants.BOARDS;
 import static org.overbaard.jira.impl.Constants.BOARD_ID;
 import static org.overbaard.jira.impl.Constants.CAN_EDIT_CUSTOM_FIELDS;
 import static org.overbaard.jira.impl.Constants.CHANGED_BY;
 import static org.overbaard.jira.impl.Constants.CHANGE_TYPE;
 import static org.overbaard.jira.impl.Constants.CODE;
 import static org.overbaard.jira.impl.Constants.CONFIG;
-import static org.overbaard.jira.impl.Constants.CONFIGS;
 import static org.overbaard.jira.impl.Constants.EDIT;
 import static org.overbaard.jira.impl.Constants.ENTRIES;
 import static org.overbaard.jira.impl.Constants.EPIC_LINK_CUSTOM_FIELD_ID;
@@ -51,6 +51,7 @@ import org.overbaard.jira.OverbaardValidationException;
 import org.overbaard.jira.api.BoardConfigurationManager;
 import org.overbaard.jira.impl.activeobjects.BoardCfg;
 import org.overbaard.jira.impl.activeobjects.BoardCfgHistory;
+import org.overbaard.jira.impl.activeobjects.BoardCfgTemplate;
 import org.overbaard.jira.impl.activeobjects.Setting;
 import org.overbaard.jira.impl.config.BoardConfig;
 import org.overbaard.jira.impl.config.BoardProjectConfig;
@@ -92,41 +93,59 @@ public class BoardConfigurationManagerImpl implements BoardConfigurationManager 
     }
 
     @Override
-    public String getBoardsJson(ApplicationUser user, boolean forConfig) {
+    public String getBoardsConfigurations(ApplicationUser user) {
         Set<BoardCfg> configs = loadBoardConfigs();
         ModelNode configsList = new ModelNode();
         configsList.setEmptyList();
         for (BoardCfg config : configs) {
-            ModelNode configNode = new ModelNode();
-            configNode.get(ID).set(config.getID());
-            configNode.get(CODE).set(config.getCode());
-            configNode.get(NAME).set(config.getName());
-            ModelNode configJson = ModelNode.fromJSONString(config.getConfigJson());
-            if (forConfig) {
-                if (canEditBoard(user, configJson)) {
-                    configNode.get(EDIT).set(true);
-                }
+            ModelNode configNode = createBoardModelNode(user, true, config);
+            if (configNode != null) {
                 configsList.add(configNode);
-            } else {
-                //A guess at what is needed to view the boards
-                if (canViewBoard(user, configNode)) {
-                    configsList.add(configNode);
-                }
             }
         }
 
         //Add a few more fields
         ModelNode config = new ModelNode();
-        config.get(CONFIGS).set(configsList);
+        config.get(BOARDS).set(configsList);
 
-        if (forConfig) {
-            config.get(CAN_EDIT_CUSTOM_FIELDS).set(canEditCustomFields(user));
-            config.get(RANK_CUSTOM_FIELD_ID).set(getRankCustomFieldId());
-            config.get(EPIC_LINK_CUSTOM_FIELD_ID).set(getEpicLinkCustomFieldId());
-            config.get(EPIC_NAME_CUSTOM_FIELD_ID).set(getEpicNameCustomFieldId());
-        }
+        config.get(CAN_EDIT_CUSTOM_FIELDS).set(canEditCustomFields(user));
+        config.get(RANK_CUSTOM_FIELD_ID).set(getRankCustomFieldId());
+        config.get(EPIC_LINK_CUSTOM_FIELD_ID).set(getEpicLinkCustomFieldId());
+        config.get(EPIC_NAME_CUSTOM_FIELD_ID).set(getEpicNameCustomFieldId());
 
         return config.toJSONString(true);
+    }
+
+    private ModelNode createBoardModelNode(ApplicationUser user, boolean forConfig, BoardCfg cfg) {
+        return createBoardOrTemplateModelNode(
+                user, forConfig, cfg.getID(), cfg.getCode(), cfg.getName(), cfg.getConfigJson());
+    }
+
+    private ModelNode createTemplateModelNode(ApplicationUser user, boolean forConfig, BoardCfgTemplate template) {
+        return createBoardOrTemplateModelNode(
+                user, forConfig, template.getID(), null, template.getName(), template.getConfigJson());
+    }
+
+    private ModelNode createBoardOrTemplateModelNode(ApplicationUser user, boolean forConfig, int id, String code, String name, String json) {
+        ModelNode configNode = new ModelNode();
+        configNode.get(ID).set(id);
+        if (code != null) {
+            configNode.get(CODE).set(code);
+        }
+        configNode.get(NAME).set(name);
+        ModelNode configJson = ModelNode.fromJSONString(json);
+        if (forConfig) {
+            if (canEditBoard(user, configJson)) {
+                configNode.get(EDIT).set(true);
+            }
+            return configNode;
+        } else {
+            //A guess at what is needed to view the boards
+            if (canViewBoard(user, configNode)) {
+                return configNode;
+            }
+        }
+        return null;
     }
 
     @Override
