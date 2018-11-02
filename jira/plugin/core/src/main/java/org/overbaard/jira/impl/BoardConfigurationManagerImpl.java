@@ -32,6 +32,7 @@ import static org.overbaard.jira.impl.Constants.OWNER;
 import static org.overbaard.jira.impl.Constants.PROJECTS;
 import static org.overbaard.jira.impl.Constants.RANK_CUSTOM_FIELD_ID;
 import static org.overbaard.jira.impl.Constants.TIME;
+import static org.overbaard.jira.impl.Constants.TEMPLATES;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -93,20 +94,31 @@ public class BoardConfigurationManagerImpl implements BoardConfigurationManager 
     }
 
     @Override
-    public String getBoardsConfigurations(ApplicationUser user) {
+    public String getBoardConfigurations(ApplicationUser user) {
         Set<BoardCfg> configs = loadBoardConfigs();
-        ModelNode configsList = new ModelNode();
-        configsList.setEmptyList();
+        ModelNode boardsList = new ModelNode();
+        boardsList.setEmptyList();
         for (BoardCfg config : configs) {
             ModelNode configNode = createBoardModelNode(user, true, config);
             if (configNode != null) {
-                configsList.add(configNode);
+                boardsList.add(configNode);
+            }
+        }
+
+        Set<BoardCfgTemplate> templates = loadBoardTemplates();
+        ModelNode templatesList = new ModelNode();
+        templatesList.setEmptyList();
+        for (BoardCfgTemplate template : templates) {
+            ModelNode templateNode = createTemplateModelNode(user, true, template);
+            if (templateNode != null) {
+                templatesList.add(templateNode);
             }
         }
 
         //Add a few more fields
         ModelNode config = new ModelNode();
-        config.get(BOARDS).set(configsList);
+        config.get(BOARDS).set(boardsList);
+        config.get(TEMPLATES).set(templatesList);
 
         config.get(CAN_EDIT_CUSTOM_FIELDS).set(canEditCustomFields(user));
         config.get(RANK_CUSTOM_FIELD_ID).set(getRankCustomFieldId());
@@ -114,38 +126,6 @@ public class BoardConfigurationManagerImpl implements BoardConfigurationManager 
         config.get(EPIC_NAME_CUSTOM_FIELD_ID).set(getEpicNameCustomFieldId());
 
         return config.toJSONString(true);
-    }
-
-    private ModelNode createBoardModelNode(ApplicationUser user, boolean forConfig, BoardCfg cfg) {
-        return createBoardOrTemplateModelNode(
-                user, forConfig, cfg.getID(), cfg.getCode(), cfg.getName(), cfg.getConfigJson());
-    }
-
-    private ModelNode createTemplateModelNode(ApplicationUser user, boolean forConfig, BoardCfgTemplate template) {
-        return createBoardOrTemplateModelNode(
-                user, forConfig, template.getID(), null, template.getName(), template.getConfigJson());
-    }
-
-    private ModelNode createBoardOrTemplateModelNode(ApplicationUser user, boolean forConfig, int id, String code, String name, String json) {
-        ModelNode configNode = new ModelNode();
-        configNode.get(ID).set(id);
-        if (code != null) {
-            configNode.get(CODE).set(code);
-        }
-        configNode.get(NAME).set(name);
-        ModelNode configJson = ModelNode.fromJSONString(json);
-        if (forConfig) {
-            if (canEditBoard(user, configJson)) {
-                configNode.get(EDIT).set(true);
-            }
-            return configNode;
-        } else {
-            //A guess at what is needed to view the boards
-            if (canViewBoard(user, configNode)) {
-                return configNode;
-            }
-        }
-        return null;
     }
 
     @Override
@@ -159,6 +139,20 @@ public class BoardConfigurationManagerImpl implements BoardConfigurationManager 
             }
         });
         ModelNode configJson = ModelNode.fromJSONString(cfgs[0].getConfigJson());
+        return configJson.toJSONString(true);
+    }
+
+    @Override
+    public String getBoardTemplateJsonConfig(ApplicationUser user, int templateId) {
+        // Note that for this path (basically for the configuration page) we don't validate the loaded
+        // config. Otherwise if we break compatibility, people will not be able to fix it.
+        BoardCfgTemplate[] templates = jiraInjectables.getActiveObjects().executeInTransaction(new TransactionCallback<BoardCfgTemplate[]>() {
+            @Override
+            public BoardCfgTemplate[] doInTransaction() {
+                return jiraInjectables.getActiveObjects().find(BoardCfgTemplate.class, Query.select().where("id = ?", templateId));
+            }
+        });
+        ModelNode configJson = ModelNode.fromJSONString(templates[0].getConfigJson());
         return configJson.toJSONString(true);
     }
 
@@ -210,9 +204,8 @@ public class BoardConfigurationManagerImpl implements BoardConfigurationManager 
         final ModelNode validConfig;
         try {
             boardConfig = BoardConfig.loadAndValidate(jiraInjectables, id,
-                    user.getKey(), config, getRankCustomFieldId(),
+                    user.getKey(), false, config, getRankCustomFieldId(),
                     getEpicLinkCustomFieldId(), getEpicNameCustomFieldId());
-
             validConfig = boardConfig.serializeModelNodeForConfig();
         } catch (Exception e) {
             throw new OverbaardValidationException("Invalid data: " + e.getMessage());
@@ -283,6 +276,62 @@ public class BoardConfigurationManagerImpl implements BoardConfigurationManager 
     }
 
     @Override
+    public BoardConfig saveBoardTemplate(ApplicationUser user, final int id, final ModelNode config) {
+        final String code = config.get(CODE).asString();
+        final String name = config.get(NAME).asString();
+
+        //Validate it, and serialize it so that the order of fields is always the same
+        final BoardConfig boardConfig;
+        final ModelNode validConfig;
+        try {
+            boardConfig = BoardConfig.loadAndValidate(jiraInjectables, id,
+                    user.getKey(), true, config, getRankCustomFieldId(), getEpicLinkCustomFieldId(), getEpicNameCustomFieldId());
+
+            validConfig = boardConfig.serializeModelNodeForConfig();
+        } catch (Exception e) {
+            throw new OverbaardValidationException("Invalid data: " + e.getMessage());
+        }
+
+        final ActiveObjects activeObjects = jiraInjectables.getActiveObjects();
+
+        activeObjects.executeInTransaction(new TransactionCallback<Void>() {
+            @Override
+            public Void doInTransaction() {
+                if (!canEditBoard(user, validConfig)) {
+                    if (id >= 0) {
+                        throw new OverbaardPermissionException("Insufficient permissions to edit board '" +
+                                validConfig.get(NAME) + "' (" + id + ")");
+                    } else {
+                        throw new OverbaardPermissionException("Insufficient permissions to create board '" +
+                                validConfig.get(NAME) + "'");
+                    }
+                }
+
+                if (id >= 0) {
+                    final BoardCfgTemplate cfg = activeObjects.get(BoardCfgTemplate.class, id);
+                    cfg.setName(name);
+                    cfg.setConfigJson(validConfig.toJSONString(true));
+                    cfg.save();
+                } else {
+                    final BoardCfgTemplate cfg = activeObjects.create(
+                            BoardCfgTemplate.class,
+                            new DBParam("NAME", name),
+                            //Compact the json before saving it
+                            new DBParam("CONFIG_JSON", validConfig.toJSONString(true)));
+                    cfg.save();
+                }
+                if (id >= 0) {
+                    boardConfigs.remove(code);
+                }
+                return null;
+            }
+        });
+        return boardConfig;
+    }
+
+
+
+    @Override
     public String deleteBoard(ApplicationUser user, int id) {
         final ActiveObjects activeObjects = jiraInjectables.getActiveObjects();
 
@@ -323,6 +372,28 @@ public class BoardConfigurationManagerImpl implements BoardConfigurationManager 
             boardConfigs.remove(code);
         }
         return code;
+    }
+
+    @Override
+    public void deleteBoardTemplate(ApplicationUser user, int id) {
+        final ActiveObjects activeObjects = jiraInjectables.getActiveObjects();
+
+        activeObjects.executeInTransaction(new TransactionCallback<Void>() {
+            @Override
+            public Void doInTransaction() {
+                BoardCfgTemplate cfg = activeObjects.get(BoardCfgTemplate.class, id);
+                if (cfg == null) {
+                    return null;
+                }
+                final ModelNode boardConfig = ModelNode.fromJSONString(cfg.getConfigJson());
+                if (!canEditBoard(user, boardConfig)) {
+                    throw new OverbaardPermissionException("Insufficient permissions to delete board template'" +
+                            boardConfig.get(NAME) + "' (" + id + ")");
+                }
+                activeObjects.delete(cfg);
+                return null;
+            }
+        });
     }
 
     @Override
@@ -423,6 +494,25 @@ public class BoardConfigurationManagerImpl implements BoardConfigurationManager 
         });
     }
 
+    private Set<BoardCfgTemplate> loadBoardTemplates() {
+        final ActiveObjects activeObjects = jiraInjectables.getActiveObjects();
+
+        return activeObjects.executeInTransaction(new TransactionCallback<Set<BoardCfgTemplate>>(){
+            @Override
+            public Set<BoardCfgTemplate> doInTransaction() {
+                Set<BoardCfgTemplate> configs = new TreeSet<>((o1, o2) -> {
+                    return o1.getName().compareTo(o2.getName());
+                });
+                for (BoardCfgTemplate boardCfg : activeObjects.find(BoardCfgTemplate.class)) {
+                    configs.add(boardCfg);
+
+                }
+                return configs;
+            }
+        });
+    }
+
+    @Override
     public long getRankCustomFieldId() {
         long id = this.rankCustomFieldId;
         if (id < 0) {
@@ -566,10 +656,42 @@ public class BoardConfigurationManagerImpl implements BoardConfigurationManager 
         String changeType = "Updated";
         if (h.getAction().equals("D")) {
             changeType = "Deleted";
-        } else if (h.getAction().equals("C")){
+        } else if (h.getAction().equals("C")) {
             changeType = "Created";
         }
         return changeType;
+    }
+
+    private ModelNode createBoardModelNode(ApplicationUser user, boolean forConfig, BoardCfg cfg) {
+        return createBoardOrTemplateModelNode(
+                user, forConfig, cfg.getID(), cfg.getCode(), cfg.getName(), cfg.getConfigJson());
+    }
+
+    private ModelNode createTemplateModelNode(ApplicationUser user, boolean forConfig, BoardCfgTemplate template) {
+        return createBoardOrTemplateModelNode(
+                user, forConfig, template.getID(), null, template.getName(), template.getConfigJson());
+    }
+
+    private ModelNode createBoardOrTemplateModelNode(ApplicationUser user, boolean forConfig, int id, String code, String name, String json) {
+        ModelNode configNode = new ModelNode();
+        configNode.get(ID).set(id);
+        if (code != null) {
+            configNode.get(CODE).set(code);
+        }
+        configNode.get(NAME).set(name);
+        ModelNode configJson = ModelNode.fromJSONString(json);
+        if (forConfig) {
+            if (canEditBoard(user, configJson)) {
+                configNode.get(EDIT).set(true);
+            }
+            return configNode;
+        } else {
+            //A guess at what is needed to view the boards
+            if (canViewBoard(user, configNode)) {
+                return configNode;
+            }
+        }
+        return null;
     }
 
     //Permission methods

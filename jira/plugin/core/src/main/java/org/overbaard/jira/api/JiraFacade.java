@@ -33,10 +33,17 @@ public interface JiraFacade {
      * Creates a new or saves a board configuration
      * @param user the logged in user
      * @param id the id of the board
-     * @param jiraUrl the url of jira
      * @param config the configuration to save
      */
-    void saveBoardConfiguration(ApplicationUser user, int id, String jiraUrl, ModelNode config);
+    void saveBoardConfiguration(ApplicationUser user, int id, ModelNode config);
+
+    /**
+     * Creates a new or saves a board configuration
+     * @param user the logged in user
+     * @param id the id of the board
+     * @param config the configuration to save
+     */
+    void saveBoardTemplateConfiguration(ApplicationUser user, int id, ModelNode config);
 
     /**
      * Deletes a board from the storage
@@ -44,6 +51,13 @@ public interface JiraFacade {
      * @param id the id of the board
      */
     void deleteBoardConfiguration(ApplicationUser user, int id);
+
+    /**
+     * Deletes a board template from the storage
+     * @param user the logged in user
+     * @param id the id of the board
+     */
+    void deleteBoardTemplateConfiguration(ApplicationUser user, int id);
 
     /**
      * Gets the boards visible to the user.
@@ -105,6 +119,15 @@ public interface JiraFacade {
      * @return the board's json
      */
     String getBoardJsonForConfig(ApplicationUser user, int boardId);
+
+    /**
+     * Loads a board template's json configuration for editing
+     * @param user the logged in user
+     * @param templateId the id of the board template
+     * @return the board template's json
+     */
+    String getBoardTemplateJsonForConfig(ApplicationUser user, int templateId);
+
 
     /**
      * Gets any help text entered for a board's states

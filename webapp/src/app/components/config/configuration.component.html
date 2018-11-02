@@ -4,14 +4,12 @@
   </div>
 </div>
 <div class="component-body">
-  <span>
-    This is a list of the boards configured in your Overbård instance.
-  </span>
-  <div class="mat-h2">Boards</div>
-  <div>
-    Select a board to update its config. For boards where you have the 'administer project' permission for the
-    main projects, you can edit and delete boards.
+  <div class="readable">
+    Below we show lists of the boards and templates configured in your Overbård instance. Select a board or template
+    to update its config. For boards or templates where you have the 'administer project' permission for the main projects,
+    you can edit and delete boards.
   </div>
+  <div class="mat-h2">Boards</div>
   <div *ngIf="(config$ | async).boards.size === 0 ; else showBoards">
     No boards are configured yet. Add some below.
   </div>
@@ -19,7 +17,7 @@
     <mat-accordion>
       <mat-expansion-panel
         *ngFor="let board of (config$ | async).boards.values()"
-        (opened)="onOpenBoardForEdit(board['id'])"
+        (opened)="onOpenBoardForEdit(false, board['id'])"
         (closed)="onCloseBoardForEdit(board['id'])">
         <mat-expansion-panel-header>
           <mat-panel-title>
@@ -40,9 +38,46 @@
     </mat-accordion>
   </ng-template>
   <hr/>
+  <div class="mat-h2">Templates</div>
+  <div *ngIf="(config$ | async).templates.size === 0 ; else showTemplates">
+    No templates are configured yet. Add some below.
+  </div>
+  <ng-template #showTemplates>
+    <mat-accordion>
+      <mat-expansion-panel
+        *ngFor="let template of (config$ | async).templates.values()"
+        (opened)="onOpenBoardForEdit(true, template['id'])"
+        (closed)="onCloseBoardForEdit(template['id'])">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            {{template['name']}}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <app-board-configuration
+          *ngIf="template['id'] === selected"
+          [configJson]="selectedBoardJson$ | async"
+          [canEdit]="template['edit']"
+          [boardName]="template['name']"
+          [jsonError]="editError"
+          (deleteBoard)="onDeleteBoard($event)"
+          (saveBoard)="onSaveEditedBoard($event)"
+          (clearJsonError)="onClearEditJsonError($event)"
+        ></app-board-configuration>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </ng-template>
+  <hr/>
   <div>
-    <div class="mat-h2">Create a new board</div>
-    <form (ngSubmit)="onSaveCreatedBoard()" [formGroup]="createForm" #f="ngForm">
+    <div class="mat-h2">Create a new board/template</div>
+    <form (ngSubmit)="onSaveCreatedBoardOrTemplate()" [formGroup]="createForm" #f="ngForm">
+      <div class="readable">
+        <p>A board will show up right away for users once it has been added.</p>
+        <p>
+          A template will not show up in the user's boards list until you have created boards from it.
+          The first step is to create the template here, and then to create boards from that template in the
+          Templates section above.
+        </p>
+      </div>
       <mat-form-field class="almost_full-width">
         <textarea
           matInput
@@ -52,7 +87,7 @@
           name="createJson"
           formControlName="createJson"
           (keyup)="clearSaveJsonErrors()"
-          placeholder="Enter json config for board"
+          placeholder="Enter json config for board/template"
         >
         </textarea>
       </mat-form-field>
@@ -67,6 +102,8 @@
           mat-raised-button
           color="primary"
         >Save</button>
+        <span>&nbsp;</span>
+        <mat-checkbox name="template" formControlName="template">Template</mat-checkbox>
       </div>
     </form>
   </div>

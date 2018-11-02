@@ -96,6 +96,7 @@ public class Constants {
     public static final String STATES = "states";
     public static final String SUMMARY = "summary";
     public static final String TIME = "time";
+    public static final String TEMPLATES = "templates";
     public static final String TYPE = "type";
     public static final String TYPE_STATES = "type-states";
     public static final String UPDATE = "update";

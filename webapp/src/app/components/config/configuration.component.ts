@@ -25,6 +25,7 @@ export class ConfigurationComponent implements OnInit {
   config$: Subject<ConfigBoardsView> = new BehaviorSubject<ConfigBoardsView>(
     {
       boards: OrderedMap<number, any>(),
+      templates: OrderedMap<number, any>(),
       canEditCustomFields: false,
       rankCustomFieldId: 0,
       epicLinkCustomFieldId: 0,
@@ -32,6 +33,7 @@ export class ConfigurationComponent implements OnInit {
 
   // For editing and deleting boards
   selected = -1;
+  selectedTemplate = false;
   selectedBoardJson$: Observable<string>;
   editError: string;
 
@@ -54,7 +56,8 @@ export class ConfigurationComponent implements OnInit {
   ngOnInit() {
     this.loadBoards();
     this.createForm = new FormGroup({
-      createJson: new FormControl('', Validators.required)
+      createJson: new FormControl('', Validators.required),
+      template: new FormControl('')
     });
     this.fieldsRestApiUrl = this._urlService.caclulateRestUrl('rest/api/2/field');
   }
@@ -77,10 +80,11 @@ export class ConfigurationComponent implements OnInit {
         });
   }
 
-  onOpenBoardForEdit(id: number) {
+  onOpenBoardForEdit(template: boolean, id: number) {
     this.selected = id;
+    this.selectedTemplate = template;
     // TODO progress and errors
-    this.selectedBoardJson$ = this._boardsService.loadBoardConfigJson(id)
+    this.selectedBoardJson$ = this._boardsService.loadBoardOrTemplateConfigJson(template, id)
       .pipe(map(data => this.formatAsJson(data)));
   }
 
@@ -112,7 +116,8 @@ export class ConfigurationComponent implements OnInit {
       return;
     }
 
-    this._boardsService.deleteBoard(id)
+    // TODO progress and errors
+    this._boardsService.deleteBoardOrTemplate(this.selectedTemplate, id)
       .pipe(
         map(data => this.toConfigBoardView(data)),
         take(1)
@@ -126,9 +131,10 @@ export class ConfigurationComponent implements OnInit {
   }
 
 
-  onSaveCreatedBoard() {
-    console.log('Saving created board');
+  onSaveCreatedBoardOrTemplate() {
+    console.log('Saving created board or template');
     const json: string  = this.createForm.controls['createJson'].value;
+
     const jsonObject: Object = this.checkJson(json);
     if (!jsonObject) {
       this.createError = 'Contents must be valid json';
@@ -144,7 +150,14 @@ export class ConfigurationComponent implements OnInit {
       return;
     }
 
-    this._boardsService.createBoard(json)
+    const template: boolean = this.createForm.controls['template'].value;
+    if (!this.checkJson(json)) {
+      this.createError = 'Contents must be valid json';
+      return;
+    }
+
+    // TODO progress and errors
+    this._boardsService.createBoardOrTemplate(template, json)
       .pipe(
         map<any, ConfigBoardsView>(data => {
           return this.toConfigBoardView(data);
@@ -182,7 +195,7 @@ export class ConfigurationComponent implements OnInit {
       return;
     }
 
-    this._boardsService.saveBoard(this.selected, boardJson)
+    this._boardsService.saveBoardOrTemplate(this.selectedTemplate, this.selected, boardJson)
       .pipe(
         map<any, ConfigBoardsView>(data => this.toConfigBoardView(data)),
         take(1)
@@ -225,9 +238,12 @@ export class ConfigurationComponent implements OnInit {
     const boards: OrderedMap<number, any> =
       (<any[]>data['boards'])
         .reduce((om, boardCfg) => om.set(boardCfg['id'], boardCfg), OrderedMap<number, any>());
-
+    const templates: OrderedMap<number, any> =
+      (<any[]>data['templates'])
+        .reduce((om, boardCfgTemplate) => om.set(boardCfgTemplate['id'], boardCfgTemplate), OrderedMap<number, any>());
     return {
       boards: boards,
+      templates: templates,
       canEditCustomFields: data['can-edit-custom-fields'],
       rankCustomFieldId: data['rank-custom-field-id'],
       epicLinkCustomFieldId: data['epic-link-custom-field-id'],
@@ -284,8 +300,10 @@ export class ConfigurationComponent implements OnInit {
 
 interface ConfigBoardsView {
   boards: OrderedMap<number, any>;
+  templates: OrderedMap<number, any>;
   canEditCustomFields: boolean;
   rankCustomFieldId: number;
   epicLinkCustomFieldId: number;
   epicNameCustomFieldId: number;
 }
+

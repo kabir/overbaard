@@ -196,7 +196,7 @@ public class RestEndpoint {
     @Path(Constants.BOARDS)
     public Response createBoard(@Context HttpServletRequest req, String config) {
         ApplicationUser user = getUser();
-        jiraFacade.saveBoardConfiguration(user, -1, Util.getDeployedUrl(req), ModelNode.fromJSONString(config));
+        jiraFacade.saveBoardConfiguration(user, -1, ModelNode.fromJSONString(config));
         String json = jiraFacade.getBoardConfigurations(user);
         return createResponse(json);
     }
@@ -208,10 +208,50 @@ public class RestEndpoint {
             @PathParam("boardId") int boardId,
             String config) {
         ApplicationUser user = getUser();
-        jiraFacade.saveBoardConfiguration(user, boardId, Util.getDeployedUrl(req), ModelNode.fromJSONString(config));
+        jiraFacade.saveBoardConfiguration(user, boardId, ModelNode.fromJSONString(config));
         String json = jiraFacade.getBoardConfigurations(user);
         return createResponse(json);
     }
+
+    @POST
+    @Path(Constants.TEMPLATES)
+    public Response createBoardTemplate(@Context HttpServletRequest req, String config) {
+        ApplicationUser user = getUser();
+        jiraFacade.saveBoardTemplateConfiguration(user, -1, ModelNode.fromJSONString(config));
+        String json = jiraFacade.getBoardConfigurations(user);
+        return createResponse(json);
+    }
+
+    @GET
+    @Path(Constants.TEMPLATES + "/{templateId}")
+    public Response getBoardTemplateConfig(@PathParam("templateId") int templateId) {
+        ApplicationUser user = getUser();
+        String json = jiraFacade.getBoardTemplateJsonForConfig(user, templateId);
+        return createResponse(json);
+    }
+
+    @PUT
+    @Path(Constants.TEMPLATES + "/{templateId}")
+    public Response saveBoardTemplate(
+            @Context HttpServletRequest req,
+            @PathParam("templateId") int templateId,
+            String config) {
+        ApplicationUser user = getUser();
+        jiraFacade.saveBoardTemplateConfiguration(user, templateId, ModelNode.fromJSONString(config));
+        String json = jiraFacade.getBoardConfigurations(user);
+        return createResponse(json);
+    }
+
+
+    @DELETE
+    @Path(Constants.TEMPLATES + "/{templateId}")
+    public Response deleteBoardTemplate(@PathParam("templateId") int templateId) {
+        ApplicationUser user = getUser();
+        jiraFacade.deleteBoardTemplateConfiguration(user, templateId);
+        String json = jiraFacade.getBoardConfigurations(user);
+        return createResponse(json);
+    }
+
 
     @PUT
     @Path("customFieldIds")

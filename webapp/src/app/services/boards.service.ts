@@ -23,15 +23,17 @@ BoardsService {
       );
   }
 
-  loadBoardConfigJson(boardId: number): Observable<any> {
+  loadBoardOrTemplateConfigJson(template: boolean, id: number): Observable<any> {
     const progress: Progress = this._progressLog.startUserAction();
-    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + '/boards/' + boardId);
+    const restUrl = template ? '/templates/' : '/boards/';
+    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl + id);
     return this.executeRequest(progress, this._httpClient.get(path));
   }
 
-  createBoard(json: string): Observable<Object> {
+  createBoardOrTemplate(template: boolean, json: string): Observable<Object> {
     const progress: Progress = this._progressLog.startUserAction();
-    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + '/boards');
+    const restUrl = template ? '/templates' : '/boards';
+    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl);
     return this.executeRequest(
       progress,
       this._httpClient.post(path, json, {
@@ -39,9 +41,10 @@ BoardsService {
       }));
   }
 
-  saveBoard(id: number, json: string): Observable<Object> {
+  saveBoardOrTemplate(template: boolean, id: number, json: string): Observable<Object> {
     const progress: Progress = this._progressLog.startUserAction();
-    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + '/boards/' + id);
+    const restUrl = template ? '/templates/' : '/boards/';
+    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl + id);
     return this.executeRequest(
       progress,
       this._httpClient
@@ -50,10 +53,10 @@ BoardsService {
         }));
   }
 
-  deleteBoard(id: number): Observable<Object> {
+  deleteBoardOrTemplate(template: boolean, id: number): Observable<Object> {
     const progress: Progress = this._progressLog.startUserAction();
-
-    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + '/boards/' + id);
+    const restUrl = template ? '/templates/' : '/boards/';
+    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl + id);
     console.log('Deleting board ' + path);
     return this.executeRequest(
       progress,

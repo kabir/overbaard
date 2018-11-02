@@ -36,7 +36,7 @@ public interface BoardConfigurationManager {
      * @param user      the logged in user
      * @return the json for the boards
      */
-    String getBoardsConfigurations(ApplicationUser user);
+    String getBoardConfigurations(ApplicationUser user);
 
     /**
      * Saves a new board (if {@code id < 0}, or updates an exisiting one. Permissions are checked to see if the user
@@ -51,13 +51,34 @@ public interface BoardConfigurationManager {
 
 
     /**
-     * Deletes a board. Permissions are checked to see if the user
-     * can delete it anything
+     * Saves a new board template (if {@code id < 0}, or updates an exisiting one. Permissions are checked to see if the user
+     * can update anything
      * @param user    the logged in user
      * @param id      the id of the board
+     * @param config  the configuration
+     * @throws OverbaardPermissionException if the user does not have the correct permissions
+     * @throws OverbaardValidationException if the input is bad
+     */
+    BoardConfig saveBoardTemplate(ApplicationUser user, int id, ModelNode config);
+
+    /**
+     * Deletes a board. Permissions are checked to see if the user
+     * can delete it
+     * @param user    the logged in user
+     * @param id      the id of the board
+     * @return the code of the deleted board
      * @throws OverbaardPermissionException if the user does not have the correct permissions
      */
     String deleteBoard(ApplicationUser user, int id);
+
+    /**
+     * Deletes a board template. Permissions are checked to see if the user
+     * can delete it
+     * @param user    the logged in user
+     * @param id      the id of the board template
+     * @throws OverbaardPermissionException if the user does not have the correct permissions
+     */
+    void deleteBoardTemplate(ApplicationUser user, int id);
 
     /**
      * Loads the board configuration. Permissions are checked to see if the user
@@ -96,6 +117,8 @@ public interface BoardConfigurationManager {
     void saveCustomFieldIds(ApplicationUser user, ModelNode idNode);
 
     String getBoardJsonConfig(ApplicationUser user, int boardId);
+
+    String getBoardTemplateJsonConfig(ApplicationUser user, int templateId);
 
     String getStateHelpTextsJson(ApplicationUser user, String boardCode);
 

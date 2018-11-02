@@ -63,6 +63,7 @@ import com.atlassian.jira.issue.priority.Priority;
 public class BoardConfig {
 
     private final int id;
+    private final boolean template;
     private final String code;
     private final String name;
     private final String owningUserKey;
@@ -85,7 +86,7 @@ public class BoardConfig {
     private final CustomFieldRegistry<CustomFieldConfig> customFields;
     private final BoardParallelTaskConfig parallelTaskConfig;
 
-    private BoardConfig(int id, String code, String name, String owningUserKey,
+    private BoardConfig(int id, boolean template, String code, String name, String owningUserKey,
                         long rankCustomFieldId,
                         long epicLinkCustomFieldId,
                         long epicSummaryCustomFieldId,
@@ -97,6 +98,7 @@ public class BoardConfig {
                         BoardParallelTaskConfig parallelTaskConfig) {
 
         this.id = id;
+        this.template = template;
         this.code = code;
         this.name = name;
         this.owningUserKey = owningUserKey;
@@ -131,13 +133,14 @@ public class BoardConfig {
                                               long rankCustomFieldId, long epicLinkCustomFieldId,
                                               long epicSummaryCustomFieldId) {
         ModelNode boardNode = ModelNode.fromJSONString(configJson);
-        return loadAndValidate(jiraInjectables, id, owningUserKey, boardNode, rankCustomFieldId, epicLinkCustomFieldId, epicSummaryCustomFieldId);
+        return loadAndValidate(jiraInjectables, id, owningUserKey, false, boardNode, rankCustomFieldId, epicLinkCustomFieldId, epicSummaryCustomFieldId);
     }
 
+
     public static BoardConfig loadAndValidate(JiraInjectables jiraInjectables,
-                                              int id, String owningUserKey, ModelNode boardNode,
+                                              int id, String owningUserKey, boolean template, ModelNode boardNode,
                                               long rankCustomFieldId, long epicLinkCustomFieldId, long epicSummaryCustomFieldId) {
-        final String code = Util.getRequiredChild(boardNode, "Group", null, CODE).asString();
+        final String code = template ? null : Util.getRequiredChild(boardNode, "Group", null, CODE).asString();
         final String boardName = Util.getRequiredChild(boardNode, "Group", null, NAME).asString();
 
 
@@ -173,7 +176,7 @@ public class BoardConfig {
             mainProjects.put(projectConfig.getCode(), projectConfig);
         }
 
-        final BoardConfig boardConfig = new BoardConfig(id, code, boardName, owningUserKey,
+        final BoardConfig boardConfig = new BoardConfig(id, template, code, boardName, owningUserKey,
                 rankCustomFieldId,
                 epicLinkCustomFieldId,
                 epicSummaryCustomFieldId,
@@ -358,7 +361,9 @@ public class BoardConfig {
     public ModelNode serializeModelNodeForConfig() {
         ModelNode boardNode = new ModelNode();
         boardNode.get(NAME).set(name);
-        boardNode.get(CODE).set(code);
+        if (!template) {
+            boardNode.get(CODE).set(code);
+        }
 
         boardStates.toModelNodeForConfig(boardNode);
 

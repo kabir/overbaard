@@ -71,7 +71,7 @@ public class OverbaardFacadeImpl implements JiraFacade, InitializingBean, Dispos
 
     @Override
     public String getBoardConfigurations(ApplicationUser user) {
-        return boardConfigurationManager.getBoardsConfigurations(user);
+        return boardConfigurationManager.getBoardConfigurations(user);
     }
 
     @Override
@@ -80,7 +80,12 @@ public class OverbaardFacadeImpl implements JiraFacade, InitializingBean, Dispos
     }
 
     @Override
-    public void saveBoardConfiguration(ApplicationUser user, int id, String jiraUrl, ModelNode config) {
+    public String getBoardTemplateJsonForConfig(ApplicationUser user, int boardId) {
+        return boardConfigurationManager.getBoardTemplateJsonConfig(user, boardId);
+    }
+
+    @Override
+    public void saveBoardConfiguration(ApplicationUser user, int id, ModelNode config) {
         BoardConfig boardConfig = boardConfigurationManager.saveBoard(user, id, config);
         if (id >= 0) {
             //We are modifying a board's configuration. Delete the board config and board data to force a refresh.
@@ -88,10 +93,26 @@ public class OverbaardFacadeImpl implements JiraFacade, InitializingBean, Dispos
         }
     }
 
+    public void saveBoardTemplateConfiguration(ApplicationUser user, int id, ModelNode config) {
+        BoardConfig boardConfig = boardConfigurationManager.saveBoardTemplate(user, id, config);
+        if (id >= 0) {
+            //We are modifying a template's configuration. Delete the board config and board data to force a refresh
+            // for all the boards implementing this template
+
+            // TODO Delete all boards belonging to the template
+
+        }
+    }
+
     @Override
     public void deleteBoardConfiguration(ApplicationUser user, int id) {
         final String code = boardConfigurationManager.deleteBoard(user, id);
         boardManager.deleteBoard(user, code);
+    }
+
+    @Override
+    public void deleteBoardTemplateConfiguration(ApplicationUser user, int id) {
+        boardConfigurationManager.deleteBoardTemplate(user, id);
     }
 
     @Override
@@ -124,7 +145,7 @@ public class OverbaardFacadeImpl implements JiraFacade, InitializingBean, Dispos
 
     @Override
     public String getBoardsForDisplay(ApplicationUser user) {
-        return boardConfigurationManager.getBoardsConfigurations(user);
+        return boardConfigurationManager.getBoardConfigurations(user);
     }
 
     @Override
