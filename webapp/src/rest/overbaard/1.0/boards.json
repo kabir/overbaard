@@ -64,6 +64,24 @@
       }
     }
   ],
+  "templates": [
+    {
+      "id": 1,
+      "name": "Test template 1",
+      "edit": true,
+      "config": {
+        "_comment": "This config doesn't actually match the setup for the POC2.json file. It is only here for illustrative purposes, and to see this board in the boards list."
+      }
+    },
+    {
+      "id": 2,
+      "name": "Test template 2",
+      "edit": true,
+      "config": {
+        "_comment": "This config doesn't actually match the setup for the POC2.json file. It is only here for illustrative purposes, and to see this board in the boards list."
+      }
+    }
+  ],
   "can-edit-custom-fields": true,
   "rank-custom-field-id": 10005,
   "epic-link-custom-field-id": 10000,

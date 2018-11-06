@@ -1,8 +1,8 @@
 import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {BoardsService} from '../../services/boards.service';
 import {AppHeaderService} from '../../services/app-header.service';
-import {BehaviorSubject, config, Observable, Observer, Subject} from 'rxjs';
-import {Iterator, OrderedMap} from 'immutable';
+import {BehaviorSubject, Observable, Subject} from 'rxjs';
+import {OrderedMap} from 'immutable';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {map, take} from 'rxjs/operators';
 import {IssueQlUtil} from '../../common/parsers/issue-ql/issue-ql.util';
@@ -32,8 +32,8 @@ export class ConfigurationComponent implements OnInit {
       epicNameCustomFieldId: 0});
 
   // For editing and deleting boards
-  selected = -1;
-  selectedTemplate = false;
+  private _selected = -1;
+  private _selectedTemplate = false;
   selectedBoardJson$: Observable<string>;
   editError: string;
 
@@ -81,22 +81,27 @@ export class ConfigurationComponent implements OnInit {
   }
 
   onOpenBoardForEdit(template: boolean, id: number) {
-    this.selected = id;
-    this.selectedTemplate = template;
+    this._selected = id;
+    this._selectedTemplate = template;
+
     // TODO progress and errors
     this.selectedBoardJson$ = this._boardsService.loadBoardOrTemplateConfigJson(template, id)
       .pipe(map(data => this.formatAsJson(data)));
   }
 
   onCloseBoardForEdit(id: number) {
-    if (this.selected === id) {
+    if (this._selected === id) {
       this.editError = null;
-      this.selected = -1;
+      this._selected = -1;
     }
   }
 
   private formatAsJson(data: any): string {
     return JSON.stringify(data, null, 2);
+  }
+
+  isSelectedBoard(input: any, template: boolean) {
+    return input['id'] === this._selected && template === this._selectedTemplate;
   }
 
   onClearEditJsonError(event: Event) {
@@ -108,7 +113,7 @@ export class ConfigurationComponent implements OnInit {
   }
 
   onDeleteBoard(event: Event) {
-    const id = this.selected;
+    const id = this._selected;
 
     console.log('Deleting board');
 
@@ -117,7 +122,7 @@ export class ConfigurationComponent implements OnInit {
     }
 
     // TODO progress and errors
-    this._boardsService.deleteBoardOrTemplate(this.selectedTemplate, id)
+    this._boardsService.deleteBoardOrTemplate(this._selectedTemplate, id)
       .pipe(
         map(data => this.toConfigBoardView(data)),
         take(1)
@@ -125,7 +130,7 @@ export class ConfigurationComponent implements OnInit {
       .subscribe(
         value => {
           this.config$.next(value);
-          this.selected = -1;
+          this._selected = -1;
         }
       );
   }
@@ -195,7 +200,7 @@ export class ConfigurationComponent implements OnInit {
       return;
     }
 
-    this._boardsService.saveBoardOrTemplate(this.selectedTemplate, this.selected, boardJson)
+    this._boardsService.saveBoardOrTemplate(this._selectedTemplate, this._selected, boardJson)
       .pipe(
         map<any, ConfigBoardsView>(data => this.toConfigBoardView(data)),
         take(1)

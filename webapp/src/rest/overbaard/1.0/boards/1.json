@@ -2,7 +2,6 @@
   "id": 1,
   "code": "POC1",
   "name": "Test board",
-  "edit": true,
   "config": {
     "name": "Test board",
     "code": "POC",

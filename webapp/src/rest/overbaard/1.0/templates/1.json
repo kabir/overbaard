@@ -1,11 +1,8 @@
 {
-  "id": 2,
-  "code": "POC2",
-  "name": "Test board",
+  "id": 1,
+  "name": "Test template 2",
   "config": {
-    "name": "Test board",
-    "code": "POC",
-    "owning-project": "SKP",
+    "name": "Test template 1",
     "rank-custom-field-id": 10009,
     "states": [
       {
@@ -68,5 +65,19 @@
         ]
       }
     }
-  }
+  },
+  "boards": [
+    {
+      "name": "First Template Board",
+      "code": "TMP-A",
+      "config": {
+        "SKP": {
+          "query-filter": "issue-type in (Task, Story, Bug)"
+        },
+        "SKBG": {
+          "query-filter": "priority = Major"
+        }
+      }
+    }
+  ]
 }

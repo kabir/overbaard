@@ -17,6 +17,7 @@
     <mat-accordion>
       <mat-expansion-panel
         *ngFor="let board of (config$ | async).boards.values()"
+        [expanded]="isSelectedBoard(board, false)"
         (opened)="onOpenBoardForEdit(false, board['id'])"
         (closed)="onCloseBoardForEdit(board['id'])">
         <mat-expansion-panel-header>
@@ -25,10 +26,11 @@
           </mat-panel-title>
         </mat-expansion-panel-header>
         <app-board-configuration
-          *ngIf="board['id'] === selected"
+          *ngIf="isSelectedBoard(board, false)"
           [configJson]="selectedBoardJson$ | async"
           [canEdit]="board['edit']"
           [boardName]="board['name']"
+          [template]="false"
           [jsonError]="editError"
           (deleteBoard)="onDeleteBoard($event)"
           (saveBoard)="onSaveEditedBoard($event)"
@@ -46,6 +48,7 @@
     <mat-accordion>
       <mat-expansion-panel
         *ngFor="let template of (config$ | async).templates.values()"
+        [expanded]="isSelectedBoard(template, true)"
         (opened)="onOpenBoardForEdit(true, template['id'])"
         (closed)="onCloseBoardForEdit(template['id'])">
         <mat-expansion-panel-header>
@@ -54,10 +57,11 @@
           </mat-panel-title>
         </mat-expansion-panel-header>
         <app-board-configuration
-          *ngIf="template['id'] === selected"
+          *ngIf="isSelectedBoard(template, true)"
           [configJson]="selectedBoardJson$ | async"
           [canEdit]="template['edit']"
           [boardName]="template['name']"
+          [template]="true"
           [jsonError]="editError"
           (deleteBoard)="onDeleteBoard($event)"
           (saveBoard)="onSaveEditedBoard($event)"

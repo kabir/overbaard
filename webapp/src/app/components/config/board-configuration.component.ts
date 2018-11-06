@@ -20,14 +20,18 @@ import {FormControl, FormGroup, Validators} from '@angular/forms';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BoardConfigurationComponent implements OnInit, OnChanges {
-  @Input()
-  configJson: string;
+  private _configJson: string;
+
+  templateBoards: any[];
 
   @Input()
   canEdit: boolean;
 
   @Input()
   boardName: string;
+
+  @Input()
+  template: boolean;
 
   @Input()
   jsonError: string;
@@ -48,18 +52,34 @@ export class BoardConfigurationComponent implements OnInit, OnChanges {
   constructor() {
   }
 
+  @Input()
+  set configJson(json: string) {
+    if (this.template) {
+      if (json) {
+        const jsonObject: any = JSON.parse(json);
+        if (jsonObject['boards']) {
+          this.templateBoards = jsonObject['boards'];
+          delete jsonObject['boards'];
+          json = JSON.stringify(jsonObject, null, 2);
+        }
+      }
+    }
+    this._configJson = json;
+  }
+
   ngOnInit() {
     this.editForm = new FormGroup({
-      editJson: new FormControl(this.configJson, Validators.required)
+      editJson: new FormControl(this._configJson, Validators.required)
     });
   }
 
   ngOnChanges(changes: SimpleChanges) {
     const configJsonChange: SimpleChange  = changes['configJson'];
     if (configJsonChange && configJsonChange.currentValue && !configJsonChange.previousValue) {
-      this.editForm.controls['editJson'].setValue(configJsonChange.currentValue);
+      this.editForm.controls['editJson'].setValue(this._configJson);
     }
   }
+
 
   onToggleDelete(event: Event) {
     this.deleting = !this.deleting;
