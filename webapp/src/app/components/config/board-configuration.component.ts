@@ -1,115 +1,76 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  OnInit,
-  Output,
-  SimpleChange,
-  SimpleChanges
-} from '@angular/core';
-import {BoardsService} from '../../services/boards.service';
-import {FormControl, FormGroup, Validators} from '@angular/forms';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from '@angular/core';
+import {BoardConfigEvent} from './board-config.event';
 
 @Component({
   selector: 'app-board-configuration',
   templateUrl: './board-configuration.component.html',
   styleUrls: ['./board-configuration.component.scss'],
-  providers: [BoardsService],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BoardConfigurationComponent implements OnInit, OnChanges {
-  private _configJson: string;
+export class BoardConfigurationComponent {
 
-  templateBoards: any[];
-
-  @Input()
-  canEdit: boolean;
-
-  @Input()
-  boardName: string;
+  private _configObject: any;
 
   @Input()
   template: boolean;
 
   @Input()
+  canEdit: boolean;
+
+  @Input()
   jsonError: string;
 
-  @Output()
-  deleteBoard: EventEmitter<null> = new EventEmitter<null>();
+  templateBoards: any[];
+
+  name: string;
+
+  templateId: number;
+
+  boardId: number;
 
   @Output()
-  saveBoard: EventEmitter<string> = new EventEmitter<string>();
+  configEvent: EventEmitter<BoardConfigEvent> = new EventEmitter<BoardConfigEvent>();
 
-  @Output()
-  clearJsonError: EventEmitter<null> = new EventEmitter<null>();
-
-  deleting = false;
-  deleteForm: FormGroup;
-  editForm: FormGroup;
+  selectedTemplateBoard: any;
 
   constructor() {
   }
 
   @Input()
-  set configJson(json: string) {
+  set config(config: any) {
     if (this.template) {
-      if (json) {
-        const jsonObject: any = JSON.parse(json);
-        if (jsonObject['boards']) {
-          this.templateBoards = jsonObject['boards'];
-          delete jsonObject['boards'];
-          json = JSON.stringify(jsonObject, null, 2);
+      if (config) {
+        if (config['boards']) {
+          this.templateBoards = config['boards'];
+          if (!this.templateBoards) {
+            this.templateBoards = [];
+          }
+          delete config['boards'];
         }
       }
     }
-    this._configJson = json;
-  }
-
-  ngOnInit() {
-    this.editForm = new FormGroup({
-      editJson: new FormControl(this._configJson, Validators.required)
-    });
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    const configJsonChange: SimpleChange  = changes['configJson'];
-    if (configJsonChange && configJsonChange.currentValue && !configJsonChange.previousValue) {
-      this.editForm.controls['editJson'].setValue(this._configJson);
+    if (config) {
+      this.name = config['name'];
+      const id = config['id'];
+      if (this.template) {
+        this.templateId = id;
+      } else {
+        this.boardId = id;
+      }
     }
+    this._configObject = config;
   }
 
-
-  onToggleDelete(event: Event) {
-    this.deleting = !this.deleting;
-    if (this.deleting) {
-      this.deleteForm = new FormGroup({
-        boardName: new FormControl('', Validators.compose([Validators.required, (control: FormControl) => {
-            if (this.boardName !== control.value) {
-              return {'boardName' : true};
-            }
-          return null;
-        }]))
-      });
-    }
-    event.preventDefault();
+  get config(): any {
+    return this._configObject;
   }
 
-  private formatAsJson(data: any): string {
-    return JSON.stringify(data, null, 2);
+  onOpenTemplateBoardForEdit(templateBoardId: any) {
+    this.selectedTemplateBoard = templateBoardId;
   }
 
-  clearJsonErrors() {
-    this.clearJsonError.emit(null);
-  }
-
-  onDeleteBoard() {
-    this.deleteBoard.emit(null);
-  }
-
-  onSaveBoard() {
-    this.saveBoard.emit(this.editForm.value.editJson);
+  onCloseTemplateBoardForEdit(templateBoardId: any) {
+    this.selectedTemplateBoard = null;
   }
 }
 

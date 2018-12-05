@@ -16,25 +16,22 @@
   <ng-template #showBoards>
     <mat-accordion>
       <mat-expansion-panel
-        *ngFor="let board of (config$ | async).boards.values()"
-        [expanded]="isSelectedBoard(board, false)"
-        (opened)="onOpenBoardForEdit(false, board['id'])"
-        (closed)="onCloseBoardForEdit(board['id'])">
+        *ngFor="let board of (config$ | async).boards"
+        [expanded]="isSelected(false,board)"
+        (opened)="onOpenForEdit(false, board)"
+        (closed)="onCloseForEdit(false, board)">
         <mat-expansion-panel-header>
           <mat-panel-title>
             {{board['name']}}
           </mat-panel-title>
         </mat-expansion-panel-header>
         <app-board-configuration
-          *ngIf="isSelectedBoard(board, false)"
-          [configJson]="selectedBoardJson$ | async"
-          [canEdit]="board['edit']"
-          [boardName]="board['name']"
+          *ngIf="isSelected(false,board)"
+          [config]="selectedBoardOrTemplate$ | async"
           [template]="false"
+          [canEdit]="board['edit']"
           [jsonError]="editError"
-          (deleteBoard)="onDeleteBoard($event)"
-          (saveBoard)="onSaveEditedBoard($event)"
-          (clearJsonError)="onClearEditJsonError($event)"
+          (configEvent)="onConfigEvent($event)"
         ></app-board-configuration>
       </mat-expansion-panel>
     </mat-accordion>
@@ -47,25 +44,22 @@
   <ng-template #showTemplates>
     <mat-accordion>
       <mat-expansion-panel
-        *ngFor="let template of (config$ | async).templates.values()"
-        [expanded]="isSelectedBoard(template, true)"
-        (opened)="onOpenBoardForEdit(true, template['id'])"
-        (closed)="onCloseBoardForEdit(template['id'])">
+        *ngFor="let template of (config$ | async).templates"
+        [expanded]="isSelected(true,template)"
+        (opened)="onOpenForEdit(true, template)"
+        (closed)="onCloseForEdit(true, template)">
         <mat-expansion-panel-header>
           <mat-panel-title>
             {{template['name']}}
           </mat-panel-title>
         </mat-expansion-panel-header>
         <app-board-configuration
-          *ngIf="isSelectedBoard(template, true)"
-          [configJson]="selectedBoardJson$ | async"
-          [canEdit]="template['edit']"
-          [boardName]="template['name']"
+          *ngIf="isSelected(true,template)"
+          [config]="selectedBoardOrTemplate$ | async"
           [template]="true"
+          [canEdit]="template['edit']"
           [jsonError]="editError"
-          (deleteBoard)="onDeleteBoard($event)"
-          (saveBoard)="onSaveEditedBoard($event)"
-          (clearJsonError)="onClearEditJsonError($event)"
+          (configEvent)="onConfigEvent($event)"
         ></app-board-configuration>
       </mat-expansion-panel>
     </mat-accordion>

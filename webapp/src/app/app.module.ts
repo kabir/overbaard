@@ -54,6 +54,7 @@ import {SearchFilterComponent} from './components/board/settings-drawer/search-f
 import {IssueQlDialogComponent} from './components/board/settings-drawer/issue-ql-dialog.component';
 import {ToolbarTitleService} from './services/toolbar-title.service';
 import {ResetToolbarTitleGuard} from './services/router/reset-toolbar-title-guard';
+import {BoardConfigInputComponent} from './components/config/board-config-input.component';
 
 const appState: AppState = initialAppState;
 export function getInitialAppState(): AppState {
@@ -70,6 +71,7 @@ export function getInitialAppState(): AppState {
     SearchFilterComponent,
     ConfigurationComponent,
     BoardConfigurationComponent,
+    BoardConfigInputComponent,
     KanbanViewComponent,
     KanbanNormalViewComponent,
     KanbanViewColumnGroupComponent,

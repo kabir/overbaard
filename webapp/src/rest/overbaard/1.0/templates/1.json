@@ -1,6 +1,6 @@
 {
   "id": 1,
-  "name": "Test template 2",
+  "name": "Test template 1",
   "config": {
     "name": "Test template 1",
     "rank-custom-field-id": 10009,
@@ -68,9 +68,23 @@
   },
   "boards": [
     {
+      "id": 25,
       "name": "First Template Board",
       "code": "TMP-A",
-      "config": {
+      "projects": {
+        "SKP": {
+          "query-filter": "issue-type in (Task, Story, Bug)"
+        },
+        "SKBG": {
+          "query-filter": "priority = Major"
+        }
+      }
+    },
+    {
+      "id": 26,
+      "name": "Second Template Board",
+      "code": "TMP-B",
+      "projects": {
         "SKP": {
           "query-filter": "issue-type in (Task, Story, Bug)"
         },
@@ -79,5 +93,6 @@
         }
       }
     }
+
   ]
 }

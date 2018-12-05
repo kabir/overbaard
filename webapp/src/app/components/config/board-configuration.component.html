@@ -1,87 +1,35 @@
-<!-- board.edit is whether the user has the edit permission -->
-<div>
-  <form (ngSubmit)="onSaveBoard()" [formGroup]="editForm" #f="ngForm">
-    <mat-form-field class="almost_full-width">
-      <textarea
-        matInput
-        matTextareaAutosize
-        matAutosizeMinRows="5"
-        matAutosizeMaxRows="25"
-        name="editJson"
-        formControlName="editJson"
-        (keyup)="clearJsonErrors()">
-      </textarea>
-    </mat-form-field>
-    <div *ngIf="jsonError">
-      <mat-error>{{jsonError}}</mat-error>
-    </div>
-    <div *ngIf="canEdit && !deleting">
-      <a
-        href="delete"
-        (click)="onToggleDelete($event)"
-        mat-raised-button
-        color="warn"
-      >Delete</a>
-      <button
-        type="submit"
-        [disabled]="!f.form.valid"
-        mat-raised-button
-        color="primary"
-      >Save</button>
-    </div>
-  </form>
-</div>
-<div *ngIf="deleting">
-  <form (ngSubmit)="onDeleteBoard()" [formGroup]="deleteForm" #f="ngForm">
-    <div>
-      <label>Type in the 'name' field of the board to delete it <b>permanently</b>:</label>
-      <mat-form-field>
-        <input
-          matInput
-          formControlName="boardName">
-      </mat-form-field>
+<app-board-configuration-input
+  [config]="config"
+  [canEdit]="canEdit"
+  [boardName]="name"
+  [boardId]="boardId"
+  [templateId]="templateId"
+  [jsonError]="jsonError"
+  (configEvent)="configEvent.emit($event)"
+></app-board-configuration-input>
 
-    </div>
-    <div>
-      <a
-        href="cancel"
-        mat-raised-button
-        color="accent"
-        (click)="onToggleDelete($event)"
-      >Cancel</a>
-      <button
-        type="submit"
-        mat-raised-button
-        color="primary"
-        [disabled]="!f.form.valid"
-      >Delete</button>
-    </div>
-  </form>
-</div>
 <div *ngIf="template">
   <div class="mat-h3">Boards based on template</div>
   <mat-accordion>
-    <!--<mat-expansion-panel
-      *ngFor="let board of (config$ | async).templates.values()"
-      (opened)="onOpenBoardForEdit(true, template['id'])"
-      (closed)="onCloseBoardForEdit(template['id'])">
+    <mat-expansion-panel
+      *ngFor="let templateBoard of templateBoards"
+      (opened)="onOpenTemplateBoardForEdit(templateBoard['id'])"
+      (closed)="onCloseTemplateBoardForEdit(templateBoard['id'])">
       <mat-expansion-panel-header>
         <mat-panel-title>
-          {{template['name']}}
+          {{templateBoard['name']}}
         </mat-panel-title>
       </mat-expansion-panel-header>
-      <app-board-configuration
-        *ngIf="template['id'] === selected"
-        [configJson]="selectedBoardJson$ | async"
-        [canEdit]="template['edit']"
-        [boardName]="template['name']"
-        [template]="true"
-        [jsonError]="editError"
-        (deleteBoard)="onDeleteBoard($event)"
-        (saveBoard)="onSaveEditedBoard($event)"
-        (clearJsonError)="onClearEditJsonError($event)"
-      ></app-board-configuration>
-    </mat-expansion-panel>-->
+      <app-board-configuration-input
+        *ngIf="templateBoard['id'] === selectedTemplateBoard"
+        [config]="templateBoard"
+        [canEdit]="canEdit"
+        [boardName]="templateBoard['name']"
+        [templateId]="templateId"
+        [boardId]="templateBoard['id']"
+        [jsonError]="jsonError"
+        (configEvent)="configEvent.emit($event)"
+      ></app-board-configuration-input>
+    </mat-expansion-panel>
   </mat-accordion>
-
 </div>

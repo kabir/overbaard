@@ -41,10 +41,9 @@ BoardsService {
       }));
   }
 
-  saveBoardOrTemplate(template: boolean, id: number, json: string): Observable<Object> {
+  saveBoardOrTemplate(templateId: number, boardId: number, json: string): Observable<Object> {
     const progress: Progress = this._progressLog.startUserAction();
-    const restUrl = template ? '/templates/' : '/boards/';
-    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl + id);
+    const path: string = this.calculateBoardOrTemplateRestPath(templateId, boardId);
     return this.executeRequest(
       progress,
       this._httpClient
@@ -53,10 +52,9 @@ BoardsService {
         }));
   }
 
-  deleteBoardOrTemplate(template: boolean, id: number): Observable<Object> {
+  deleteBoardOrTemplate(templateId: number, boardId: number): Observable<Object> {
     const progress: Progress = this._progressLog.startUserAction();
-    const restUrl = template ? '/templates/' : '/boards/';
-    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl + id);
+    const path: string = this.calculateBoardOrTemplateRestPath(templateId, boardId);
     console.log('Deleting board ' + path);
     return this.executeRequest(
       progress,
@@ -64,6 +62,20 @@ BoardsService {
       .delete(path, {
         headers: this.createHeaders()
       }));
+  }
+
+  private calculateBoardOrTemplateRestPath(templateId: number, boardId: number): string {
+    const template: boolean = !isNaN(templateId);
+    const board: boolean = !isNaN(boardId);
+    let restUrl = template ? '/templates/' : '/boards/';
+    if (template && !board) {
+      restUrl = '/templates/' + templateId;
+    } else if (!template && board) {
+      restUrl = '/boards/' + boardId;
+    } else if (template && board) {
+      restUrl = '/templates/' + templateId + '/boards/' + boardId;
+    }
+    return this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl);
   }
 
   saveCustomFieldsIds(rank: number, epicLink: number, epicName: number): Observable<Object> {

@@ -2,7 +2,7 @@ import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
 import {BoardsService} from '../../services/boards.service';
 import {AppHeaderService} from '../../services/app-header.service';
 import {BehaviorSubject, Observable, Subject} from 'rxjs';
-import {OrderedMap} from 'immutable';
+import {List} from 'immutable';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {map, take} from 'rxjs/operators';
 import {IssueQlUtil} from '../../common/parsers/issue-ql/issue-ql.util';
@@ -10,6 +10,7 @@ import * as issueQlParser from '../../common/parsers/issue-ql/pegjs/issue-ql.gen
 import {UrlService} from '../../services/url.service';
 import {environment} from '../../../environments/environment';
 import {ProgressLogService} from '../../services/progress-log.service';
+import {BoardConfigEvent, BoardConfigType} from './board-config.event';
 
 @Component({
   selector: 'app-configuration',
@@ -22,19 +23,20 @@ export class ConfigurationComponent implements OnInit {
 
   // There isn't much going on with data here, so we're not using redux in this area (for now). Instead we push
   // the current data to this subject
-  config$: Subject<ConfigBoardsView> = new BehaviorSubject<ConfigBoardsView>(
+  readonly config$: Subject<ConfigBoardsView> = new BehaviorSubject<ConfigBoardsView>(
     {
-      boards: OrderedMap<number, any>(),
-      templates: OrderedMap<number, any>(),
+      boards: List<any>(),
+      templates: List<any>(),
       canEditCustomFields: false,
       rankCustomFieldId: 0,
       epicLinkCustomFieldId: 0,
-      epicNameCustomFieldId: 0});
+      epicNameCustomFieldId: 0
+      });
 
   // For editing and deleting boards
   private _selected = -1;
   private _selectedTemplate = false;
-  selectedBoardJson$: Observable<string>;
+  selectedBoardOrTemplate$: Observable<any>;
   editError: string;
 
   // For creating boards
@@ -80,61 +82,30 @@ export class ConfigurationComponent implements OnInit {
         });
   }
 
-  onOpenBoardForEdit(template: boolean, id: number) {
+  onOpenForEdit(template: boolean, boardOrTemplate: any) {
+    const id = boardOrTemplate['id'];
     this._selected = id;
     this._selectedTemplate = template;
 
     // TODO progress and errors
-    this.selectedBoardJson$ = this._boardsService.loadBoardOrTemplateConfigJson(template, id)
-      .pipe(map(data => this.formatAsJson(data)));
+    this.selectedBoardOrTemplate$ = this._boardsService.loadBoardOrTemplateConfigJson(template, id);
   }
 
-  onCloseBoardForEdit(id: number) {
-    if (this._selected === id) {
+  onCloseForEdit(template: boolean, boardOrTemplate: any) {
+    const id = boardOrTemplate['id'];
+    if (this._selected === id && template !== this._selectedTemplate) {
       this.editError = null;
-      this._selected = -1;
     }
   }
 
-  private formatAsJson(data: any): string {
-    return JSON.stringify(data, null, 2);
-  }
-
-  isSelectedBoard(input: any, template: boolean) {
-    return input['id'] === this._selected && template === this._selectedTemplate;
-  }
-
-  onClearEditJsonError(event: Event) {
-    this.editError = null;
+  isSelected(template: boolean, boardOrTemplate: any) {
+    const selected = boardOrTemplate['id'] === this._selected && template === this._selectedTemplate;
+    return selected;
   }
 
   clearSaveJsonErrors() {
     this.createError = null;
   }
-
-  onDeleteBoard(event: Event) {
-    const id = this._selected;
-
-    console.log('Deleting board');
-
-    if (!this.checkDemoAndLogMessage()) {
-      return;
-    }
-
-    // TODO progress and errors
-    this._boardsService.deleteBoardOrTemplate(this._selectedTemplate, id)
-      .pipe(
-        map(data => this.toConfigBoardView(data)),
-        take(1)
-      )
-      .subscribe(
-        value => {
-          this.config$.next(value);
-          this._selected = -1;
-        }
-      );
-  }
-
 
   onSaveCreatedBoardOrTemplate() {
     console.log('Saving created board or template');
@@ -156,10 +127,6 @@ export class ConfigurationComponent implements OnInit {
     }
 
     const template: boolean = this.createForm.controls['template'].value;
-    if (!this.checkJson(json)) {
-      this.createError = 'Contents must be valid json';
-      return;
-    }
 
     // TODO progress and errors
     this._boardsService.createBoardOrTemplate(template, json)
@@ -183,33 +150,6 @@ export class ConfigurationComponent implements OnInit {
       });
   }
 
-  onSaveEditedBoard(boardJson: string) {
-    console.log('Saving edited board');
-    const jsonObject: Object = this.checkJson(boardJson);
-    if (!jsonObject) {
-      this.editError = 'Contents must be valid json';
-      return;
-    }
-    const issueQlError = this.checkManualSwimlanesIssueQl(jsonObject);
-    if (issueQlError) {
-      this.editError = issueQlError;
-      return;
-    }
-
-    if (!this.checkDemoAndLogMessage()) {
-      return;
-    }
-
-    this._boardsService.saveBoardOrTemplate(this._selectedTemplate, this._selected, boardJson)
-      .pipe(
-        map<any, ConfigBoardsView>(data => this.toConfigBoardView(data)),
-        take(1)
-      )
-      .subscribe(
-        value => {
-          this.config$.next(value);
-        });
-  }
 
   onSaveCustomFieldId() {
     if (!this.checkDemoAndLogMessage()) {
@@ -240,12 +180,12 @@ export class ConfigurationComponent implements OnInit {
   }
 
   private toConfigBoardView(data: any): ConfigBoardsView {
-    const boards: OrderedMap<number, any> =
+    const boards: List<any> =
       (<any[]>data['boards'])
-        .reduce((om, boardCfg) => om.set(boardCfg['id'], boardCfg), OrderedMap<number, any>());
-    const templates: OrderedMap<number, any> =
+        .reduce((li, boardCfg) => li.push(boardCfg), List<any>());
+    const templates: List<any> =
       (<any[]>data['templates'])
-        .reduce((om, boardCfgTemplate) => om.set(boardCfgTemplate['id'], boardCfgTemplate), OrderedMap<number, any>());
+        .reduce((li, boardCfgTemplate) => li.push(boardCfgTemplate), List<any>());
     return {
       boards: boards,
       templates: templates,
@@ -301,11 +241,58 @@ export class ConfigurationComponent implements OnInit {
     return true;
   }
 
+
+  onConfigEvent(event: BoardConfigEvent) {
+    if (event.type === BoardConfigType.CLEAR_JSON_ERROR) {
+      this.editError = null;
+    } else if (event.type === BoardConfigType.SAVE) {
+
+      console.log('Saving edited board');
+      const boardJson: any = event.payload;
+      const jsonObject: Object = this.checkJson(boardJson);
+      if (!jsonObject) {
+        this.createError = 'Contents must be valid json';
+        return;
+      }
+      const issueQlError = this.checkManualSwimlanesIssueQl(jsonObject);
+      if (issueQlError) {
+        this.createError = issueQlError;
+        return;
+      }
+
+      if (!this.checkDemoAndLogMessage()) {
+        return;
+      }
+
+      this._boardsService.saveBoardOrTemplate(event.templateId, event.boardId, boardJson)
+        .pipe(
+          map<any, ConfigBoardsView>(data => this.toConfigBoardView(data)),
+          take(1)
+        )
+        .subscribe(
+          value => {
+            this.config$.next(value);
+          });
+    } else if (event.type === BoardConfigType.DELETE) {
+      console.log('Deleting board');
+      this._boardsService.deleteBoardOrTemplate(event.templateId, event.boardId)
+        .pipe(
+          map(data => this.toConfigBoardView(data)),
+          take(1)
+        )
+        .subscribe(
+          value => {
+            this.config$.next(value);
+            this._selected = -1;
+          }
+        );
+    }
+  }
 }
 
 interface ConfigBoardsView {
-  boards: OrderedMap<number, any>;
-  templates: OrderedMap<number, any>;
+  boards: List<any>;
+  templates: List<any>;
   canEditCustomFields: boolean;
   rankCustomFieldId: number;
   epicLinkCustomFieldId: number;
