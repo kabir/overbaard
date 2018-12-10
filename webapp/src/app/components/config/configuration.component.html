@@ -28,6 +28,7 @@
         <app-board-configuration
           *ngIf="isSelected(false,board)"
           [config]="selectedBoardOrTemplate$ | async"
+          [configId]="board['id']"
           [template]="false"
           [canEdit]="board['edit']"
           [jsonError]="editError"
@@ -56,6 +57,7 @@
         <app-board-configuration
           *ngIf="isSelected(true,template)"
           [config]="selectedBoardOrTemplate$ | async"
+          [configId]="template['id']"
           [template]="true"
           [canEdit]="template['edit']"
           [jsonError]="editError"

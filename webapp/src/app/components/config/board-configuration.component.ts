@@ -12,6 +12,9 @@ export class BoardConfigurationComponent {
   private _configObject: any;
 
   @Input()
+  configId: number;
+
+  @Input()
   template: boolean;
 
   @Input()
@@ -51,11 +54,10 @@ export class BoardConfigurationComponent {
     }
     if (config) {
       this.name = config['name'];
-      const id = config['id'];
       if (this.template) {
-        this.templateId = id;
+        this.templateId = this.configId;
       } else {
-        this.boardId = id;
+        this.boardId = this.configId;
       }
     }
     this._configObject = config;
