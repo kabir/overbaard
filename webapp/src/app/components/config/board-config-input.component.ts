@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {BoardConfigEvent, BoardConfigType} from './board-config.event';
+import {BoardConfigCheckerUtil} from './board-config-checker.util';
 
 @Component({
   selector: 'app-board-configuration-input',
@@ -38,7 +39,6 @@ export class BoardConfigInputComponent implements OnInit, OnChanges {
   @Input()
   boardId: number;
 
-  @Input()
   jsonError: string;
 
   @Output()
@@ -89,15 +89,29 @@ export class BoardConfigInputComponent implements OnInit, OnChanges {
   }
 
   onSaveConfig() {
+    const json: string = this.editForm.value.editJson;
+    this.jsonError = new BoardConfigCheckerUtil(json).check();
+    if (this.jsonError) {
+      this.jsonError = 'Contents must be valid json';
+      return;
+    }
     const type: BoardConfigType = this.isNew ? BoardConfigType.NEW : BoardConfigType.SAVE;
     this.configEvent.emit(new BoardConfigEvent(type, this.templateId, this.boardId, this.editForm.value.editJson));
   }
 
   clearJsonErrors() {
-    this.configEvent.emit(new BoardConfigEvent(BoardConfigType.CLEAR_JSON_ERROR, this.templateId, this.boardId, null));
+    this.jsonError = null;
   }
 
   onDeleteConfig() {
     this.configEvent.emit(new BoardConfigEvent(BoardConfigType.DELETE, this.templateId, this.boardId, null));
+  }
+
+  private checkJson(value: string): Object {
+    try {
+      return JSON.parse(value);
+    } catch (e) {
+      return null;
+    }
   }
 }

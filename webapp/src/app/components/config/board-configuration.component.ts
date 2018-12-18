@@ -20,9 +20,6 @@ export class BoardConfigurationComponent {
   @Input()
   canEdit: boolean;
 
-  @Input()
-  jsonError: string;
-
   templateBoards: any[];
 
   name: string;

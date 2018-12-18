@@ -5,8 +5,6 @@ import {BehaviorSubject, Observable, Subject} from 'rxjs';
 import {List} from 'immutable';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {map, take} from 'rxjs/operators';
-import {IssueQlUtil} from '../../common/parsers/issue-ql/issue-ql.util';
-import * as issueQlParser from '../../common/parsers/issue-ql/pegjs/issue-ql.generated';
 import {UrlService} from '../../services/url.service';
 import {environment} from '../../../environments/environment';
 import {ProgressLogService} from '../../services/progress-log.service';
@@ -37,11 +35,6 @@ export class ConfigurationComponent implements OnInit {
   private _selected = null;
   private _selectedTemplate = false;
   selectedBoardOrTemplate$: Observable<any>;
-  editError: string;
-
-  // For creating boards
-  createForm: FormGroup;
-  createError: string;
 
   // For saving the rank id
   customFieldsForm: FormGroup;
@@ -57,10 +50,6 @@ export class ConfigurationComponent implements OnInit {
 
   ngOnInit() {
     this.loadBoards();
-    this.createForm = new FormGroup({
-      createJson: new FormControl('', Validators.required),
-      template: new FormControl('')
-    });
     this.fieldsRestApiUrl = this._urlService.caclulateRestUrl('rest/api/2/field');
   }
 
@@ -95,18 +84,11 @@ export class ConfigurationComponent implements OnInit {
 
   onCloseForEdit(template: boolean, boardOrTemplate?: any) {
     const id: number = boardOrTemplate ? boardOrTemplate['id'] : -1;
-    if (this._selected === id && template !== this._selectedTemplate) {
-      this.editError = null;
-    }
   }
 
   isSelected(template: boolean, boardOrTemplate?: any) {
     const id: number = boardOrTemplate ? boardOrTemplate['id'] : -1;
     return id === this._selected && template === this._selectedTemplate;
-  }
-
-  clearSaveJsonErrors() {
-    this.createError = null;
   }
 
   onSaveCustomFieldId() {
@@ -154,43 +136,6 @@ export class ConfigurationComponent implements OnInit {
     };
   }
 
-  private checkManualSwimlanesIssueQl(boardConfig: Object): string {
-    const cfg: any = boardConfig['config'];
-    if (!cfg) {
-      // Proper validation happens on server
-      return;
-    }
-    const mslConfig = cfg['manual-swimlanes'];
-    if (mslConfig) {
-      if (!Array.isArray(mslConfig)) {
-        // Proper validation happens on server
-        return null;
-      }
-      for (const msl of mslConfig) {
-        const entries: any = msl['entries'];
-        if (!Array.isArray(entries)) {
-          // Proper validation happens on server
-          return null;
-        }
-        for (const entry of entries) {
-          let iql = entry['issue-ql'];
-          if (!iql) {
-            // Proper validation happens on server
-            return null;
-          }
-          iql = iql.trim();
-          let error: issueQlParser.SyntaxError;
-          if (iql.length > 0) {
-            error = IssueQlUtil.validateIssueQl(iql);
-            if (error) {
-              return `"Invalid Issue QL: "${iql}". The parser error is: ${error}"`;
-            }
-          }
-        }
-      }
-    }
-  }
-
   private checkDemoAndLogMessage(): boolean {
     if (environment.demo) {
       this._progressLog.startUserAction().logWarning('This is a read-only demo instance. The selected functionality is not available');
@@ -201,27 +146,14 @@ export class ConfigurationComponent implements OnInit {
 
 
   onConfigEvent(event: BoardConfigEvent) {
-    if (event.type === BoardConfigType.CLEAR_JSON_ERROR) {
-      this.editError = null;
-    } else if (event.type === BoardConfigType.SAVE) {
+    if (event.type === BoardConfigType.SAVE) {
 
       console.log('Saving edited board');
       const boardJson: any = event.payload;
-      const jsonObject: Object = this.checkJson(boardJson);
-      if (!jsonObject) {
-        this.createError = 'Contents must be valid json';
-        return;
-      }
-      const issueQlError = this.checkManualSwimlanesIssueQl(jsonObject);
-      if (issueQlError) {
-        this.createError = issueQlError;
-        return;
-      }
 
       if (!this.checkDemoAndLogMessage()) {
         return;
       }
-
       this._boardsService.saveBoardOrTemplate(event.templateId, event.boardId, boardJson)
         .pipe(
           map<any, ConfigBoardsView>(data => this.toConfigBoardView(data)),
@@ -233,6 +165,10 @@ export class ConfigurationComponent implements OnInit {
           });
     } else if (event.type === BoardConfigType.DELETE) {
       console.log('Deleting board');
+
+      if (!this.checkDemoAndLogMessage()) {
+        return;
+      }
       this._boardsService.deleteBoardOrTemplate(event.templateId, event.boardId)
         .pipe(
           map(data => this.toConfigBoardView(data)),
@@ -247,16 +183,6 @@ export class ConfigurationComponent implements OnInit {
     } else if (event.type === BoardConfigType.NEW) {
       console.log('Creating board');
       const boardJson: any = event.payload;
-      const jsonObject: Object = this.checkJson(boardJson);
-      if (!jsonObject) {
-        this.createError = 'Contents must be valid json';
-        return;
-      }
-      const issueQlError = this.checkManualSwimlanesIssueQl(jsonObject);
-      if (issueQlError) {
-        this.createError = issueQlError;
-        return;
-      }
 
       if (!this.checkDemoAndLogMessage()) {
         return;
@@ -271,7 +197,7 @@ export class ConfigurationComponent implements OnInit {
         .subscribe(
           value => {
             this.config$.next(value);
-            this.createForm.controls['createJson'].setValue('');
+            // TODO - find a way to clear the form once saved
           });
 
       this.config$

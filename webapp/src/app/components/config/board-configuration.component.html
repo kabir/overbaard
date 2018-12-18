@@ -4,7 +4,6 @@
   [boardName]="name"
   [boardId]="boardId"
   [templateId]="templateId"
-  [jsonError]="jsonError"
   (configEvent)="configEvent.emit($event)"
 ></app-board-configuration-input>
 
@@ -27,7 +26,6 @@
         [boardName]="templateBoard['name']"
         [templateId]="templateId"
         [boardId]="templateBoard['id']"
-        [jsonError]="jsonError"
         (configEvent)="configEvent.emit($event)"
       ></app-board-configuration-input>
     </mat-expansion-panel>

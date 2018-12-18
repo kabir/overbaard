@@ -31,7 +31,6 @@
           [configId]="board['id']"
           [template]="false"
           [canEdit]="board['edit']"
-          [jsonError]="editError"
           (configEvent)="onConfigEvent($event)"
         ></app-board-configuration>
       </mat-expansion-panel>
@@ -75,7 +74,6 @@
           [configId]="template['id']"
           [template]="true"
           [canEdit]="template['edit']"
-          [jsonError]="editError"
           (configEvent)="onConfigEvent($event)"
         ></app-board-configuration>
       </mat-expansion-panel>
