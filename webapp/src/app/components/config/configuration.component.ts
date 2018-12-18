@@ -34,7 +34,7 @@ export class ConfigurationComponent implements OnInit {
       });
 
   // For editing and deleting boards
-  private _selected = -1;
+  private _selected = null;
   private _selectedTemplate = false;
   selectedBoardOrTemplate$: Observable<any>;
   editError: string;
@@ -82,74 +82,32 @@ export class ConfigurationComponent implements OnInit {
         });
   }
 
-  onOpenForEdit(template: boolean, boardOrTemplate: any) {
-    const id = boardOrTemplate['id'];
+  onOpenForEdit(template: boolean, boardOrTemplate?: any) {
+    const id: number = boardOrTemplate ? boardOrTemplate['id'] : -1;
     this._selected = id;
     this._selectedTemplate = template;
 
-    // TODO progress and errors
-    this.selectedBoardOrTemplate$ = this._boardsService.loadBoardOrTemplateConfigJson(template, id);
+    if (boardOrTemplate) {
+      // Only load if editing a board
+      this.selectedBoardOrTemplate$ = this._boardsService.loadBoardOrTemplateConfigJson(template, id);
+    }
   }
 
-  onCloseForEdit(template: boolean, boardOrTemplate: any) {
-    const id = boardOrTemplate['id'];
+  onCloseForEdit(template: boolean, boardOrTemplate?: any) {
+    const id: number = boardOrTemplate ? boardOrTemplate['id'] : -1;
     if (this._selected === id && template !== this._selectedTemplate) {
       this.editError = null;
     }
   }
 
-  isSelected(template: boolean, boardOrTemplate: any) {
-    const selected = boardOrTemplate['id'] === this._selected && template === this._selectedTemplate;
-    return selected;
+  isSelected(template: boolean, boardOrTemplate?: any) {
+    const id: number = boardOrTemplate ? boardOrTemplate['id'] : -1;
+    return id === this._selected && template === this._selectedTemplate;
   }
 
   clearSaveJsonErrors() {
     this.createError = null;
   }
-
-  onSaveCreatedBoardOrTemplate() {
-    console.log('Saving created board or template');
-    const json: string  = this.createForm.controls['createJson'].value;
-
-    const jsonObject: Object = this.checkJson(json);
-    if (!jsonObject) {
-      this.createError = 'Contents must be valid json';
-      return;
-    }
-    const issueQlError = this.checkManualSwimlanesIssueQl(jsonObject);
-    if (issueQlError) {
-      this.createError = issueQlError;
-      return;
-    }
-
-    if (!this.checkDemoAndLogMessage()) {
-      return;
-    }
-
-    const template: boolean = this.createForm.controls['template'].value;
-
-    // TODO progress and errors
-    this._boardsService.createBoardOrTemplate(template, json)
-      .pipe(
-        map<any, ConfigBoardsView>(data => {
-          return this.toConfigBoardView(data);
-        }),
-        take(1)
-      )
-      .subscribe(
-        value => {
-          this.config$.next(value);
-          this.createForm.controls['createJson'].setValue('');
-          });
-
-    this.config$
-      .pipe(
-        take(1)
-      )
-      .subscribe(data => {
-      });
-  }
-
 
   onSaveCustomFieldId() {
     if (!this.checkDemoAndLogMessage()) {
@@ -283,9 +241,45 @@ export class ConfigurationComponent implements OnInit {
         .subscribe(
           value => {
             this.config$.next(value);
-            this._selected = -1;
+            this._selected = null;
           }
         );
+    } else if (event.type === BoardConfigType.NEW) {
+      console.log('Creating board');
+      const boardJson: any = event.payload;
+      const jsonObject: Object = this.checkJson(boardJson);
+      if (!jsonObject) {
+        this.createError = 'Contents must be valid json';
+        return;
+      }
+      const issueQlError = this.checkManualSwimlanesIssueQl(jsonObject);
+      if (issueQlError) {
+        this.createError = issueQlError;
+        return;
+      }
+
+      if (!this.checkDemoAndLogMessage()) {
+        return;
+      }
+      this._boardsService.createBoardOrTemplate(event.templateId, event.boardId, boardJson)
+        .pipe(
+          map<any, ConfigBoardsView>(data => {
+            return this.toConfigBoardView(data);
+          }),
+          take(1)
+        )
+        .subscribe(
+          value => {
+            this.config$.next(value);
+            this.createForm.controls['createJson'].setValue('');
+          });
+
+      this.config$
+        .pipe(
+          take(1)
+        )
+        .subscribe(data => {
+        });
     }
   }
 }

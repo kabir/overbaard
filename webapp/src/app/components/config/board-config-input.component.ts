@@ -20,8 +20,11 @@ import {BoardConfigEvent, BoardConfigType} from './board-config.event';
 })
 export class BoardConfigInputComponent implements OnInit, OnChanges {
 
+  // This will only be set if editing a board, for new boards it will be null
   @Input()
   config: any;
+
+  isNew = false;
 
   @Input()
   canEdit: boolean;
@@ -49,16 +52,24 @@ export class BoardConfigInputComponent implements OnInit, OnChanges {
     this.editForm = new FormGroup({
       editJson: new FormControl(this.formatJson(this.config), Validators.required)
     });
+    this.isNew = !this.config;
   }
 
   ngOnChanges(changes: SimpleChanges) {
     const configJsonChange: SimpleChange  = changes['config'];
     if (configJsonChange && !configJsonChange.firstChange && configJsonChange.currentValue && !configJsonChange.previousValue) {
       this.editForm.controls['editJson'].setValue(this.formatJson(this.config));
+      console.log('change');
+      console.log(this.config);
+
+      this.isNew = !this.config;
     }
   }
 
   private formatJson(config: any): string {
+    if (!config) {
+      return '';
+    }
     return JSON.stringify(config, null, 2);
   }
 
@@ -78,7 +89,8 @@ export class BoardConfigInputComponent implements OnInit, OnChanges {
   }
 
   onSaveConfig() {
-    this.configEvent.emit(new BoardConfigEvent(BoardConfigType.SAVE, this.templateId, this.boardId, this.editForm.value.editJson));
+    const type: BoardConfigType = this.isNew ? BoardConfigType.NEW : BoardConfigType.SAVE;
+    this.configEvent.emit(new BoardConfigEvent(type, this.templateId, this.boardId, this.editForm.value.editJson));
   }
 
   clearJsonErrors() {

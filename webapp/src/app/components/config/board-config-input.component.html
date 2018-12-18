@@ -16,7 +16,7 @@
       <mat-error>{{jsonError}}</mat-error>
     </div>
     <div *ngIf="canEdit && !deleting">
-      <a
+      <a *ngIf="!isNew"
         href="delete"
         (click)="onToggleDelete($event)"
         mat-raised-button

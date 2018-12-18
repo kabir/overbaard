@@ -55,6 +55,7 @@ import {IssueQlDialogComponent} from './components/board/settings-drawer/issue-q
 import {ToolbarTitleService} from './services/toolbar-title.service';
 import {ResetToolbarTitleGuard} from './services/router/reset-toolbar-title-guard';
 import {BoardConfigInputComponent} from './components/config/board-config-input.component';
+import {NewBoardConfigComponent} from './components/config/board-config-new.component';
 
 const appState: AppState = initialAppState;
 export function getInitialAppState(): AppState {
@@ -72,6 +73,7 @@ export function getInitialAppState(): AppState {
     ConfigurationComponent,
     BoardConfigurationComponent,
     BoardConfigInputComponent,
+    NewBoardConfigComponent,
     KanbanViewComponent,
     KanbanNormalViewComponent,
     KanbanViewColumnGroupComponent,

@@ -10,5 +10,6 @@ export class BoardConfigEvent {
 export enum BoardConfigType {
   CLEAR_JSON_ERROR,
   DELETE,
-  SAVE
+  SAVE,
+  NEW
 }

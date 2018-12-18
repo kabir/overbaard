@@ -31,5 +31,17 @@
         (configEvent)="configEvent.emit($event)"
       ></app-board-configuration-input>
     </mat-expansion-panel>
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>add</mat-icon>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <app-board-configuration-new
+        [template]="false"
+        [owningTemplateId]="templateId"
+        (configEvent)="configEvent.emit($event)"
+      ></app-board-configuration-new>
+    </mat-expansion-panel>
   </mat-accordion>
 </div>

@@ -4,6 +4,7 @@ import {UrlService} from './url.service';
 import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
 import {Progress, ProgressLogService} from './progress-log.service';
 import {catchError, map, tap, timeout} from 'rxjs/operators';
+import {isNumber} from 'util';
 
 @Injectable()
 export class
@@ -30,9 +31,21 @@ BoardsService {
     return this.executeRequest(progress, this._httpClient.get(path));
   }
 
-  createBoardOrTemplate(template: boolean, json: string): Observable<Object> {
+  createBoardOrTemplate(templateId: number, boardId: number, json: string): Observable<Object> {
     const progress: Progress = this._progressLog.startUserAction();
-    const restUrl = template ? '/templates' : '/boards';
+    let restUrl = '';
+    if (isNumber(templateId) && templateId >= 0 && boardId === -1) {
+      // Save a new board for a template
+      restUrl = '/templates/' + templateId + '/boards';
+    } else if (isNaN(templateId) && boardId === -1) {
+      // Save a new board
+      restUrl = '/boards';
+    } else if (isNaN(boardId) && templateId === -1) {
+      // Save a new template
+      restUrl = '/templates';
+    } else {
+      throw new Error(`The combination of boardId: ${boardId} and templateId: ${templateId} is not known`);
+    }
     const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl);
     return this.executeRequest(
       progress,
