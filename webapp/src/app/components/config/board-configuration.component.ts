@@ -1,5 +1,7 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {BoardConfigEvent} from './board-config.event';
+import {take} from 'rxjs/operators';
+import {MatExpansionPanel} from '@angular/material';
 
 @Component({
   selector: 'app-board-configuration',
@@ -30,6 +32,9 @@ export class BoardConfigurationComponent {
 
   @Output()
   configEvent: EventEmitter<BoardConfigEvent> = new EventEmitter<BoardConfigEvent>();
+
+  @ViewChild('newPanel')
+  newPanel: MatExpansionPanel;
 
   selectedTemplateBoard: any;
 
@@ -69,6 +74,21 @@ export class BoardConfigurationComponent {
   }
 
   onCloseTemplateBoardForEdit(templateBoardId: any) {
+    this.selectedTemplateBoard = null;
+  }
+
+  onNewConfigEvent(event: BoardConfigEvent) {
+    event.eventHandled$
+      .pipe(
+        take(1)
+      )
+      .subscribe((value: boolean) => {
+        if (value) {
+          this.selectedTemplateBoard = null;
+          this.newPanel.close();
+        }
+      });
+    this.configEvent.next(event);
     this.selectedTemplateBoard = null;
   }
 }

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, OnInit} from '@angular/core';
+import {ChangeDetectionStrategy, Component, OnInit, QueryList, ViewChildren} from '@angular/core';
 import {BoardsService} from '../../services/boards.service';
 import {AppHeaderService} from '../../services/app-header.service';
 import {BehaviorSubject, Observable, Subject} from 'rxjs';
@@ -9,6 +9,7 @@ import {UrlService} from '../../services/url.service';
 import {environment} from '../../../environments/environment';
 import {ProgressLogService} from '../../services/progress-log.service';
 import {BoardConfigEvent, BoardConfigType} from './board-config.event';
+import {MatExpansionPanel} from '@angular/material';
 
 @Component({
   selector: 'app-configuration',
@@ -40,6 +41,10 @@ export class ConfigurationComponent implements OnInit {
   customFieldsForm: FormGroup;
 
   fieldsRestApiUrl: string;
+
+  @ViewChildren(MatExpansionPanel)
+  newPanels: QueryList<MatExpansionPanel>;
+
 
   constructor(private _boardsService: BoardsService,
               appHeaderService: AppHeaderService,
@@ -162,6 +167,10 @@ export class ConfigurationComponent implements OnInit {
         .subscribe(
           value => {
             this.config$.next(value);
+            event.eventHandled$.next(true);
+          },
+          error => {
+            event.eventHandled$.next(false);
           });
     } else if (event.type === BoardConfigType.DELETE) {
       console.log('Deleting board');
@@ -178,6 +187,10 @@ export class ConfigurationComponent implements OnInit {
           value => {
             this.config$.next(value);
             this._selected = null;
+            event.eventHandled$.next(true);
+          },
+          error => {
+            event.eventHandled$.next(false);
           }
         );
     } else if (event.type === BoardConfigType.NEW) {
@@ -197,7 +210,11 @@ export class ConfigurationComponent implements OnInit {
         .subscribe(
           value => {
             this.config$.next(value);
-            // TODO - find a way to clear the form once saved
+            event.eventHandled$.next(true);
+            this.newPanels.forEach(panel => panel.close());
+          },
+          error => {
+            event.eventHandled$.next(false);
           });
 
       this.config$

@@ -12,6 +12,7 @@ import {
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 import {BoardConfigEvent, BoardConfigType} from './board-config.event';
 import {BoardConfigCheckerUtil} from './board-config-checker.util';
+import {take} from 'rxjs/operators';
 
 @Component({
   selector: 'app-board-configuration-input',
@@ -96,7 +97,20 @@ export class BoardConfigInputComponent implements OnInit, OnChanges {
       return;
     }
     const type: BoardConfigType = this.isNew ? BoardConfigType.NEW : BoardConfigType.SAVE;
-    this.configEvent.emit(new BoardConfigEvent(type, this.templateId, this.boardId, this.editForm.value.editJson));
+
+    const event: BoardConfigEvent = new BoardConfigEvent(type, this.templateId, this.boardId, this.editForm.value.editJson);
+    if (this.isNew) {
+      event.eventHandled$.
+        pipe(
+          take(1))
+        .subscribe((ok: boolean) => {
+          if (ok) {
+            this.editForm.controls['editJson'].setValue('');
+          }
+        });
+    }
+
+    this.configEvent.emit(event);
   }
 
   clearJsonErrors() {
@@ -107,11 +121,4 @@ export class BoardConfigInputComponent implements OnInit, OnChanges {
     this.configEvent.emit(new BoardConfigEvent(BoardConfigType.DELETE, this.templateId, this.boardId, null));
   }
 
-  private checkJson(value: string): Object {
-    try {
-      return JSON.parse(value);
-    } catch (e) {
-      return null;
-    }
-  }
 }

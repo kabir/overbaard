@@ -38,7 +38,7 @@
       <app-board-configuration-new
         [template]="false"
         [owningTemplateId]="templateId"
-        (configEvent)="configEvent.emit($event)"
+        (configEvent)="onNewConfigEvent($event)"
       ></app-board-configuration-new>
     </mat-expansion-panel>
   </mat-accordion>
