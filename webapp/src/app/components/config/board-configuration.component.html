@@ -8,7 +8,7 @@
 ></app-board-configuration-input>
 
 <div *ngIf="template">
-  <div class="mat-h3">Boards based on template</div>
+  <div class="mat-h3">Boards based on template:</div>
   <mat-accordion>
     <mat-expansion-panel
       *ngFor="let templateBoard of templateBoards"
@@ -16,14 +16,14 @@
       (closed)="onCloseTemplateBoardForEdit(templateBoard['id'])">
       <mat-expansion-panel-header>
         <mat-panel-title>
-          {{templateBoard['name']}}
+          {{templateBoard['board']['name']}}
         </mat-panel-title>
       </mat-expansion-panel-header>
       <app-board-configuration-input
         *ngIf="templateBoard['id'] === selectedTemplateBoard"
-        [config]="templateBoard"
+        [config]="templateBoard['board']"
         [canEdit]="canEdit"
-        [boardName]="templateBoard['name']"
+        [boardName]="templateBoard['board']['name']"
         [templateId]="templateId"
         [boardId]="templateBoard['id']"
         (configEvent)="configEvent.emit($event)"

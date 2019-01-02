@@ -93,6 +93,7 @@ public class OverbaardFacadeImpl implements JiraFacade, InitializingBean, Dispos
         }
     }
 
+    @Override
     public void saveBoardTemplateConfiguration(ApplicationUser user, int id, ModelNode config) {
         BoardConfig boardConfig = boardConfigurationManager.saveBoardTemplate(user, id, config);
         if (id >= 0) {
@@ -102,6 +103,11 @@ public class OverbaardFacadeImpl implements JiraFacade, InitializingBean, Dispos
             // TODO Delete all boards belonging to the template
 
         }
+    }
+
+    @Override
+    public void saveBoardForTemplateConfiguration(ApplicationUser user, int templateId, int boardId, ModelNode config) {
+        boardConfigurationManager.saveBoardForTemplate(user, templateId, boardId, config);
     }
 
     @Override

@@ -29,10 +29,12 @@ import static org.overbaard.jira.impl.Constants.NAME;
 import static org.overbaard.jira.impl.Constants.PARALLEL_TASKS;
 import static org.overbaard.jira.impl.Constants.PRIORITIES;
 import static org.overbaard.jira.impl.Constants.PROJECTS;
+import static org.overbaard.jira.impl.Constants.QUERY_FILTER;
 import static org.overbaard.jira.impl.Constants.RANK_CUSTOM_FIELD_ID;
 import static org.overbaard.jira.impl.Constants.STATES;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,7 +72,7 @@ public class BoardConfig {
     /** Custom field ids  */
     private final long rankCustomFieldId;
     private final long epicLinkCustomFieldId;
-    private final long epicSummaryCustomFieldId;
+    private final long epicNameCustomFieldId;
 
     private final BoardStates boardStates;
     private final Map<String, BoardProjectConfig> boardProjects;
@@ -86,10 +88,15 @@ public class BoardConfig {
     private final CustomFieldRegistry<CustomFieldConfig> customFields;
     private final BoardParallelTaskConfig parallelTaskConfig;
 
+    private static final Set<String> VALID_PROJECT_OVERRIDES =
+            Collections.unmodifiableSet(new HashSet<>(Arrays.asList(new String[]{
+                    QUERY_FILTER
+            })));
+
     private BoardConfig(int id, boolean template, String code, String name, String owningUserKey,
                         long rankCustomFieldId,
                         long epicLinkCustomFieldId,
-                        long epicSummaryCustomFieldId,
+                        long epicNameCustomFieldId,
                         BoardStates boardStates,
                         Map<String, BoardProjectConfig> boardProjects, Map<String, LinkedProjectConfig> linkedProjects,
                         Map<String, NameAndColour> priorities, Map<String, NameAndColour> issueTypes,
@@ -104,7 +111,7 @@ public class BoardConfig {
         this.owningUserKey = owningUserKey;
         this.rankCustomFieldId = rankCustomFieldId;
         this.epicLinkCustomFieldId = epicLinkCustomFieldId;
-        this.epicSummaryCustomFieldId = epicSummaryCustomFieldId;
+        this.epicNameCustomFieldId = epicNameCustomFieldId;
         this.boardStates = boardStates;
         this.boardProjects = boardProjects;
         this.linkedProjects = linkedProjects;
@@ -131,15 +138,16 @@ public class BoardConfig {
     public static BoardConfig loadAndValidate(JiraInjectables jiraInjectables, int id,
                                               String owningUserKey, String configJson,
                                               long rankCustomFieldId, long epicLinkCustomFieldId,
-                                              long epicSummaryCustomFieldId) {
+                                              long epicNameCustomFieldId) {
         ModelNode boardNode = ModelNode.fromJSONString(configJson);
-        return loadAndValidate(jiraInjectables, id, owningUserKey, false, boardNode, rankCustomFieldId, epicLinkCustomFieldId, epicSummaryCustomFieldId);
+        return loadAndValidate(jiraInjectables, id, owningUserKey, false, boardNode, rankCustomFieldId,
+                epicLinkCustomFieldId, epicNameCustomFieldId);
     }
 
 
     public static BoardConfig loadAndValidate(JiraInjectables jiraInjectables,
                                               int id, String owningUserKey, boolean template, ModelNode boardNode,
-                                              long rankCustomFieldId, long epicLinkCustomFieldId, long epicSummaryCustomFieldId) {
+                                              long rankCustomFieldId, long epicLinkCustomFieldId, long epicNameCustomFieldId) {
         final String code = template ? null : Util.getRequiredChild(boardNode, "Group", null, CODE).asString();
         final String boardName = Util.getRequiredChild(boardNode, "Group", null, NAME).asString();
 
@@ -179,7 +187,7 @@ public class BoardConfig {
         final BoardConfig boardConfig = new BoardConfig(id, template, code, boardName, owningUserKey,
                 rankCustomFieldId,
                 epicLinkCustomFieldId,
-                epicSummaryCustomFieldId,
+                epicNameCustomFieldId,
                 boardStates,
                 Collections.unmodifiableMap(mainProjects),
                 Collections.unmodifiableMap(linkedProjects),
@@ -267,6 +275,100 @@ public class BoardConfig {
         return priorityMap;
     }
 
+    public static BoardConfig loadAndValidateBoardForTemplate(JiraInjectables jiraInjectables,
+                                                              int boardId, String owningUserKey,
+                                                              ModelNode templateNode, ModelNode boardNode,
+                                                              long rankCustomFieldId, long epicLinkCustomFieldId,
+                                                              long epicNameCustomFieldId) {
+        final String code = Util.getRequiredChild(boardNode, "Group", null, CODE).asString();
+        final String boardName = Util.getRequiredChild(boardNode, "Group", null, NAME).asString();
+
+        if (boardNode.hasDefined(PROJECTS)) {
+            ModelNode templateProjects = new ModelNode();
+            for (ModelNode node : templateNode.get(PROJECTS).asList()) {
+                templateProjects.get(node.get(CODE).asString()).set(node);
+            }
+            for (String projectCode : boardNode.get(PROJECTS).keys()) {
+                if (!templateProjects.hasDefined(projectCode)) {
+                    throw new OverbaardValidationException("Attempting to override settings for project '" + projectCode
+                            + "' which is not a project in the template");
+                }
+                ModelNode projectNode = boardNode.get(PROJECTS, projectCode);
+                if (projectNode.getType() != ModelType.OBJECT) {
+                    throw new OverbaardValidationException("The entry for project '" + projectCode + "' must be a map of values to override");
+                }
+
+                // Validate the known choices here. The merge below will pick out problems in their format
+                for (String key : projectNode.keys()) {
+                    if (!VALID_PROJECT_OVERRIDES.contains(key)) {
+                        throw new OverbaardValidationException(
+                                "Overriding '" + key + "' in project '" + projectCode + "' is not allowed." +
+                                        "Valid choices are " + VALID_PROJECT_OVERRIDES);
+                    }
+                }
+            }
+        }
+
+        // merge the two and validate
+        ModelNode mergedNode = mergeBoardWithTemplate(templateNode, boardNode);
+        return BoardConfig.loadAndValidate(jiraInjectables, boardId, owningUserKey,
+                mergedNode.toJSONString(false), rankCustomFieldId, epicLinkCustomFieldId, epicNameCustomFieldId);
+    }
+
+    private static ModelNode mergeBoardWithTemplate(ModelNode templateNode, ModelNode boardNode) {
+        ModelNode mergedNode = templateNode.clone();
+        mergedNode.get(CODE).set(boardNode.get(CODE));
+        mergedNode.get(NAME).set(boardNode.get(NAME));
+
+        if (boardNode.hasDefined(PROJECTS)) {
+
+            Map<String, Integer> indices = new HashMap<>();
+            ModelNode templateProjects = new ModelNode();
+            int i = 0;
+            for (ModelNode node : templateNode.get(PROJECTS).asList()) {
+                String projectCode = node.get(CODE).asString();
+                templateProjects.get(projectCode).set(node);
+                indices.put(projectCode, i);
+                i++;
+            }
+
+            for (String projectCode : boardNode.get(PROJECTS).keys()) {
+                ModelNode projectNode = boardNode.get(PROJECTS, projectCode);
+                for (String key : VALID_PROJECT_OVERRIDES) {
+                    if (projectNode.has(key)) {
+                        int projectIndex = indices.get(projectCode);
+                        mergedNode.get(PROJECTS).get(projectIndex).get(key).set(projectNode.get(key));
+                    }
+                }
+            }
+        }
+        return mergedNode;
+    }
+
+    public static ModelNode serializeBoardForTemplateConfig(ModelNode config) {
+        // Just serialize the node out again in a determined order
+        ModelNode modelNode = new ModelNode();
+        modelNode.get(NAME).set(config.get(NAME));
+        modelNode.get(CODE).set(config.get(CODE));
+
+        final ModelNode projects = new ModelNode();
+        projects.setEmptyObject();
+        for (String projectCode : config.get(PROJECTS).keys()) {
+            final ModelNode sourceProject = config.get(PROJECTS, projectCode);
+            ModelNode project = new ModelNode();
+            project.setEmptyObject();
+
+            for (String key : VALID_PROJECT_OVERRIDES) {
+                if (sourceProject.has(key)) {
+                    project.get(key).set(sourceProject.get(key));
+                }
+            }
+            projects.get(projectCode).set(project);
+        }
+        modelNode.get(PROJECTS).set(projects);
+        return modelNode;
+    }
+
     private void getIndexMap(Map<String, NameAndColour> original, Map<String, Integer> index, List<String> list) {
         for (String key : original.keySet()) {
             index.put(key, index.size());
@@ -282,8 +384,8 @@ public class BoardConfig {
         return name;
     }
 
-    public long getEpicSummaryCustomFieldId() {
-        return epicSummaryCustomFieldId;
+    public long getEpicNameCustomFieldId() {
+        return epicNameCustomFieldId;
     }
 
     public long getEpicLinkCustomFieldId() {

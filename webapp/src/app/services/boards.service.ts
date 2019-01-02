@@ -4,7 +4,6 @@ import {UrlService} from './url.service';
 import {HttpClient, HttpErrorResponse, HttpHeaders} from '@angular/common/http';
 import {Progress, ProgressLogService} from './progress-log.service';
 import {catchError, map, tap, timeout} from 'rxjs/operators';
-import {isNumber} from 'util';
 
 @Injectable()
 export class
@@ -34,7 +33,7 @@ BoardsService {
   createBoardOrTemplate(templateId: number, boardId: number, json: string): Observable<Object> {
     const progress: Progress = this._progressLog.startUserAction();
     let restUrl = '';
-    if (isNumber(templateId) && templateId >= 0 && boardId === -1) {
+    if (!isNaN(templateId) && templateId >= 0 && boardId === -1) {
       // Save a new board for a template
       restUrl = '/templates/' + templateId + '/boards';
     } else if (isNaN(templateId) && boardId === -1) {
@@ -47,6 +46,8 @@ BoardsService {
       throw new Error(`The combination of boardId: ${boardId} and templateId: ${templateId} is not known`);
     }
     const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl);
+    console.log('Creating config ' + path);
+
     return this.executeRequest(
       progress,
       this._httpClient.post(path, json, {
@@ -56,7 +57,20 @@ BoardsService {
 
   saveBoardOrTemplate(templateId: number, boardId: number, json: string): Observable<Object> {
     const progress: Progress = this._progressLog.startUserAction();
-    const path: string = this.calculateBoardOrTemplateRestPath(templateId, boardId);
+    const template: boolean = !isNaN(templateId);
+    const board: boolean = !isNaN(boardId);
+    let restUrl = template ? '/templates/' : '/boards/';
+    if (template && !board) {
+      restUrl = '/templates/' + templateId;
+    } else if (!template && board) {
+      restUrl = '/boards/' + boardId;
+    } else if (template && board) {
+      restUrl = '/templates/' + templateId + '/boards/' + boardId;
+    }
+
+    const path: string = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl);
+    console.log('Saving config ' + path);
+
     return this.executeRequest(
       progress,
       this._httpClient
@@ -67,8 +81,16 @@ BoardsService {
 
   deleteBoardOrTemplate(templateId: number, boardId: number): Observable<Object> {
     const progress: Progress = this._progressLog.startUserAction();
-    const path: string = this.calculateBoardOrTemplateRestPath(templateId, boardId);
-    console.log('Deleting board ' + path);
+    const template: boolean = !isNaN(templateId);
+    const board: boolean = !isNaN(boardId);
+
+    console.log(`t: ${templateId} b: ${boardId} t? ${template} t? ${board}`);
+
+    // If both board and template are passed in, we are deleting a board
+    const restUrl: string = !board ? '/templates/' + templateId : '/boards/' + boardId;
+    const path = this._restUrlService.caclulateRestUrl(UrlService.OVERBAARD_REST_PREFIX + restUrl);
+    console.log('Deleting config ' + path);
+
     return this.executeRequest(
       progress,
       this._httpClient

@@ -302,7 +302,7 @@ class BulkIssueLoadStrategy implements IssueLoadStrategy {
                 .append("epic.id = il.source and\tepic.project = epicProject.id and cfv.issue = epic.id and ")
                 .append("epicProject.pkey = '" + project.getCode() + "' and ")
                 .append("il.linkType = " + epicLinkId + " and ")
-                .append("cfv.customfield = " + project.getBoard().getConfig().getEpicSummaryCustomFieldId() + " and ")
+                .append("cfv.customfield = " + project.getBoard().getConfig().getEpicNameCustomFieldId() + " and ")
                 .append("il.destination in " + createInIdsClause(idBatch));
 
         try (ResultSet rs = sqlProcessor.executeQuery(sb.toString())){

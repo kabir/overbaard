@@ -26,6 +26,7 @@ public class Constants {
     public static final String BLACKLIST = "blacklist";
     public static final String BACKLOG = "backlog";
     public static final String BOARD_ID = "board_id";
+    public static final String BOARD = "board";
     public static final String BOARDS = "boards";
     public static final String CAN_EDIT_CUSTOM_FIELDS = "can-edit-custom-fields";
     public static final String CONFIG = "config";

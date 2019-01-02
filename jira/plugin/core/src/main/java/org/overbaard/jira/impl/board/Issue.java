@@ -802,7 +802,7 @@ public abstract class Issue {
 
             // TODO get from configuration
             final long epicLinkCustomField = project.getBoard().getConfig().getEpicLinkCustomFieldId();
-            final long epicSummaryCustomField = project.getBoard().getConfig().getEpicSummaryCustomFieldId();
+            final long epicNameCustomField = project.getBoard().getConfig().getEpicNameCustomFieldId();
 
             if (project.projectConfig.isEnableEpics()) {
                 CustomFieldManager customFieldManager = project.getJiraInjectables().getCustomFieldManager();
@@ -817,7 +817,7 @@ public abstract class Issue {
                         if (epic == null) {
                             epic = newEpics.get(epicKey);
                             if (epic == null) {
-                                CustomField epicSummaryField = customFieldManager.getCustomFieldObject(epicSummaryCustomField);
+                                CustomField epicSummaryField = customFieldManager.getCustomFieldObject(epicNameCustomField);
                                 if (epicSummaryField != null) {
                                     String epicSummary = (String)epicIssue.getCustomFieldValue(epicSummaryField);
                                     epic = new Epic(epicKey, epicSummary);

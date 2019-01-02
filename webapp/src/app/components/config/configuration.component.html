@@ -10,10 +10,10 @@
     you can edit and delete boards.
   </div>
   <div class="mat-h2">Boards</div>
-  <div *ngIf="(config$ | async).boards.size === 0 ; else showBoards">
+  <div *ngIf="(config$ | async).boards.size === 0">
     No boards are configured yet. Add some below.
   </div>
-  <ng-template #showBoards>
+  <div>
     <mat-accordion>
       <mat-expansion-panel
         *ngFor="let board of (config$ | async).boards"
@@ -25,14 +25,16 @@
             {{board['name']}}
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <app-board-configuration
-          *ngIf="isSelected(false, board)"
-          [config]="selectedBoardOrTemplate$ | async"
-          [configId]="board['id']"
-          [template]="false"
-          [canEdit]="board['edit']"
-          (configEvent)="onConfigEvent($event)"
-        ></app-board-configuration>
+        <ng-template matExpansionPanelContent>
+          <app-board-configuration
+            *ngIf="isSelected(false, board)"
+            [config]="selectedBoardOrTemplate$ | async"
+            [configId]="board['id']"
+            [template]="false"
+            [canEdit]="board['edit']"
+            (configEvent)="onConfigEvent($event)"
+          ></app-board-configuration>
+        </ng-template>
       </mat-expansion-panel>
       <mat-expansion-panel
         [expanded]="isSelected(false)"
@@ -43,20 +45,22 @@
             <mat-icon>add</mat-icon>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <app-board-configuration-new
-          *ngIf="isSelected(false)"
-          [template]="false"
-          (configEvent)="onConfigEvent($event)"
-        ></app-board-configuration-new>
+        <ng-template matExpansionPanelContent>
+          <app-board-configuration-new
+            *ngIf="isSelected(false)"
+            [template]="false"
+            (configEvent)="onConfigEvent($event)"
+          ></app-board-configuration-new>
+        </ng-template>
       </mat-expansion-panel>
     </mat-accordion>
-  </ng-template>
+  </div>
   <hr/>
   <div class="mat-h2">Templates</div>
-  <div *ngIf="(config$ | async).templates.size === 0 ; else showTemplates">
+  <div *ngIf="(config$ | async).templates.size === 0">
     No templates are configured yet. Add some below.
   </div>
-  <ng-template #showTemplates>
+  <div>
     <mat-accordion>
       <mat-expansion-panel
         *ngFor="let template of (config$ | async).templates"
@@ -68,14 +72,16 @@
             {{template['name']}}
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <app-board-configuration
-          *ngIf="isSelected(true,template)"
-          [config]="selectedBoardOrTemplate$ | async"
-          [configId]="template['id']"
-          [template]="true"
-          [canEdit]="template['edit']"
-          (configEvent)="onConfigEvent($event)"
-        ></app-board-configuration>
+        <ng-template matExpansionPanelContent>
+          <app-board-configuration
+            *ngIf="isSelected(true,template)"
+            [config]="selectedBoardOrTemplate$ | async"
+            [configId]="template['id']"
+            [template]="true"
+            [canEdit]="template['edit']"
+            (configEvent)="onConfigEvent($event)"
+          ></app-board-configuration>
+        </ng-template>
       </mat-expansion-panel>
       <mat-expansion-panel
         [expanded]="isSelected(true)"
@@ -86,14 +92,16 @@
             <mat-icon>add</mat-icon>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <app-board-configuration-new
-          *ngIf="isSelected(true)"
-          [template]="true"
-          (configEvent)="onConfigEvent($event)"
-        ></app-board-configuration-new>
+        <ng-template matExpansionPanelContent>
+          <app-board-configuration-new
+            *ngIf="isSelected(true)"
+            [template]="true"
+            (configEvent)="onConfigEvent($event)"
+          ></app-board-configuration-new>
+        </ng-template>
       </mat-expansion-panel>
     </mat-accordion>
-  </ng-template>
+  </div>
   <hr/>
 
   <div *ngIf="(config$ | async).canEditCustomFields">

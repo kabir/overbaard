@@ -60,6 +60,15 @@ public interface JiraFacade {
     void deleteBoardTemplateConfiguration(ApplicationUser user, int id);
 
     /**
+     * Creates or updates a board config based on a template
+     * @param user the currently
+     * @param templateId the id of the template
+     * @param boardId the id of the board. If creating a new board use {@code -1}
+     * @param config the configuration to save
+     */
+    void saveBoardForTemplateConfiguration(ApplicationUser user, int templateId, int boardId, ModelNode config);
+
+    /**
      * Gets the boards visible to the user.
      * @param user
      * @return the json of the boards

@@ -252,6 +252,28 @@ public class RestEndpoint {
         return createResponse(json);
     }
 
+    @POST
+    @Path(Constants.TEMPLATES + "/{templateId}/" + Constants.BOARDS)
+    public Response createBoardForTemplate(
+            @PathParam("templateId") int templateId,
+            String config) {
+        ApplicationUser user = getUser();
+        jiraFacade.saveBoardForTemplateConfiguration(user, templateId, -1, ModelNode.fromJSONString(config));
+        String json = jiraFacade.getBoardConfigurations(user);
+        return createResponse(json);
+    }
+
+    @PUT
+    @Path(Constants.TEMPLATES + "/{templateId}/" + Constants.BOARDS + "/{boardId}/")
+    public Response saveBoardForTemplate(
+            @PathParam("templateId") int templateId,
+            @PathParam("boardId") int boardId,
+            String config) {
+        ApplicationUser user = getUser();
+        jiraFacade.saveBoardForTemplateConfiguration(user, templateId, boardId, ModelNode.fromJSONString(config));
+        // TODO figure out what to remove
+        return createResponse("{}");
+    }
 
     @PUT
     @Path("customFieldIds")

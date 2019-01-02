@@ -62,6 +62,15 @@ public interface BoardConfigurationManager {
     BoardConfig saveBoardTemplate(ApplicationUser user, int id, ModelNode config);
 
     /**
+     * Creates or updates a board config based on a template
+     * @param user the currently
+     * @param templateId the id of the template
+     * @param boardId the id of the board. If creating a new board use {@code -1}
+     * @param config the configuration to save
+     */
+    void saveBoardForTemplate(ApplicationUser user, int templateId, int boardId, ModelNode config);
+
+    /**
      * Deletes a board. Permissions are checked to see if the user
      * can delete it
      * @param user    the logged in user

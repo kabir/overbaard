@@ -68,30 +68,33 @@
   "boards": [
     {
       "id": 25,
-      "name": "First Template Board",
-      "code": "TMP-A",
-      "projects": {
-        "SKP": {
-          "query-filter": "issue-type in (Task, Story, Bug)"
-        },
-        "SKBG": {
-          "query-filter": "priority = Major"
+      "board" : {
+        "name": "First Template Board",
+        "code": "TMP-A",
+        "projects": {
+          "SKP": {
+            "query-filter": "issue-type in (Task, Story, Bug)"
+          },
+          "SKBG": {
+            "query-filter": "priority = Major"
+          }
         }
       }
     },
     {
       "id": 26,
-      "name": "Second Template Board",
-      "code": "TMP-B",
-      "projects": {
-        "SKP": {
-          "query-filter": "issue-type in (Task, Story, Bug)"
-        },
-        "SKBG": {
-          "query-filter": "priority = Major"
+      "board": {
+        "name": "Second Template Board",
+        "code": "TMP-B",
+        "projects": {
+          "SKP": {
+            "query-filter": "issue-type in (Task, Story, Bug)"
+          },
+          "SKBG": {
+            "query-filter": "priority = Major"
+          }
         }
       }
     }
-
   ]
 }
