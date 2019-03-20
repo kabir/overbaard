@@ -26,20 +26,14 @@ import java.util.List;
 import java.util.Set;
 
 import com.atlassian.jira.bc.issue.search.SearchService;
-import com.atlassian.jira.bc.project.component.ProjectComponent;
 import com.atlassian.jira.issue.Issue;
-import com.atlassian.jira.issue.issuetype.IssueType;
-import com.atlassian.jira.issue.label.Label;
-import com.atlassian.jira.issue.priority.Priority;
 import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchResults;
 import com.atlassian.jira.issue.search.managers.SearchHandlerManager;
-import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.jql.builder.JqlClauseBuilder;
 import com.atlassian.jira.jql.builder.JqlClauseBuilderFactory;
 import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.mock.component.MockComponentWorker;
-import com.atlassian.jira.project.version.Version;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.bean.PagerFilter;
 import com.atlassian.query.Query;
@@ -150,7 +144,7 @@ public class SearchServiceBuilder {
         }
     }
 
-    private static class IssueDetail {
+    /*private static class IssueDetail {
         final Issue issue;
 
         final IssueType issueType;
@@ -159,7 +153,8 @@ public class SearchServiceBuilder {
         final ApplicationUser assignee = mock(ApplicationUser.class);
 
         public IssueDetail(String key, String issueType, String priority, String summary,
-                           String state, String assignee, String[] components, String[] labels, String[] fixVersions) {
+                           String state, String assignee, String[] components, String[] labels,
+                           String[] fixVersions, String[] affectsVersions) {
             //Do the nested mocks first
             this.issueType = MockIssueType.create(issueType);
             this.priority = MockPriority.create(priority);
@@ -178,10 +173,15 @@ public class SearchServiceBuilder {
             if (fixVersions != null && fixVersions.length > 0) {
                 fixVersionSet = MockVersion.createVersions(fixVersions);
             }
+            Set<Version> affectsVersionSet = null;
+            if (affectsVersions != null) {
+                affectsVersionSet = MockVersion.createVersions(affectsVersions);
+            }
 
-            this.issue = new MockIssue(key, this.issueType, this.priority, summary, this.assignee, componentSet, labelSet, fixVersionSet, this.state);
+            this.issue = new MockIssue(key, this.issueType, this.priority, summary, this.assignee,
+                    componentSet, labelSet, fixVersionSet, affectsVersionSet, this.state);
         }
-    }
+    }*/
 
     public interface SearchCallback {
         void searching();

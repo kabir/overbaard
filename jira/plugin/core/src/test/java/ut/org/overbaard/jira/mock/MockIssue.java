@@ -58,6 +58,7 @@ public class MockIssue implements Issue {
     private final Set<ProjectComponent> components;
     private final Set<Label> labels;
     private final Set<Version> fixVersions;
+    private final Set<Version> affectsVersions;
     private final Status state;
 
     private String parentKey;
@@ -66,7 +67,8 @@ public class MockIssue implements Issue {
     private final Map<Long, Object> customFields = new HashMap<>();
 
     public MockIssue(String key, IssueType issueType, Priority priority, String summary, ApplicationUser assignee,
-                     Set<ProjectComponent> components, Set<Label> labels, Set<Version> fixVersions, Status state) {
+                     Set<ProjectComponent> components, Set<Label> labels, Set<Version> fixVersions,
+                     Set<Version> affectsVersions, Status state) {
         this.key = key;
         this.issueType = issueType;
         this.priority = priority;
@@ -75,6 +77,7 @@ public class MockIssue implements Issue {
         this.components = components;
         this.labels = labels;
         this.fixVersions = fixVersions;
+        this.affectsVersions = affectsVersions;
         this.state = state;
     }
 
@@ -170,7 +173,7 @@ public class MockIssue implements Issue {
 
     @Override
     public Collection<Version> getAffectedVersions() {
-        return null;
+        return affectsVersions;
     }
 
     @Override
@@ -307,7 +310,7 @@ public class MockIssue implements Issue {
         if (parentKey != null) {
             // We're only interested in the key
             return new MockIssue(parentKey, null, null, null, null,
-                    Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), null);
+                    Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), null);
         }
         return null;
     }
@@ -408,7 +411,7 @@ public class MockIssue implements Issue {
 
     public void setEpic(Epic epic) {
         this.epic = new MockIssue(epic.getKey(), null, null, null, null,
-                Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), null);
+                Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), null);
         this.epic.setCustomField(TestConstants.EPIC_NAME_CUSTOM_FIELD_ID, epic.getName());
     }
 

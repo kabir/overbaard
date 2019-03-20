@@ -145,7 +145,10 @@ public abstract class Issue {
      */
     static Issue createForCreateEvent(BoardProject.Accessor project, String issueKey, String state,
                                       String summary, String issueType, String priority, Assignee assignee,
-                                      Set<MultiSelectNameOnlyValue.Component> components, Set<MultiSelectNameOnlyValue.Label> labels, Set<MultiSelectNameOnlyValue.FixVersion> fixVersions,
+                                      Set<MultiSelectNameOnlyValue.Component> components,
+                                      Set<MultiSelectNameOnlyValue.Label> labels,
+                                      Set<MultiSelectNameOnlyValue.FixVersion> fixVersions,
+                                      Set<MultiSelectNameOnlyValue.AffectsVersion> affectsVersions,
                                       Map<String, CustomFieldValue> customFieldValues,
                                       Map<ParallelTaskGroupPosition, Integer> parallelTaskGroupValues) {
         Builder builder = new Builder(project, issueKey);
@@ -157,6 +160,7 @@ public abstract class Issue {
         builder.setComponents(components);
         builder.setLabels(labels);
         builder.setFixVersions(fixVersions);
+        builder.setAffectsVersions(affectsVersions);
         builder.setCustomFieldValues(customFieldValues);
         builder.setParallelTaskGroupValues(parallelTaskGroupValues);
 
@@ -191,19 +195,21 @@ public abstract class Issue {
     static Issue copyForUpdateEvent(BoardProject.Accessor project, Issue existing, String issueType, String priority,
                                     String summary, Assignee issueAssignee, Set<MultiSelectNameOnlyValue.Component> issueComponents,
                                     Set<MultiSelectNameOnlyValue.Label> labels, Set<MultiSelectNameOnlyValue.FixVersion> fixVersions,
+                                    Set<MultiSelectNameOnlyValue.AffectsVersion> affectsVersions,
                                     String state, Map<String, CustomFieldValue> customFieldValues,
                                     Map<ParallelTaskGroupPosition, Integer> parallelTaskGroupValues) {
         if (existing instanceof BoardIssue == false) {
             return null;
         }
         return copyForUpdateEvent(project, (BoardIssue)existing, issueType, priority,
-                summary, issueAssignee, issueComponents, labels, fixVersions, state,
+                summary, issueAssignee, issueComponents, labels, fixVersions, affectsVersions, state,
                 customFieldValues, parallelTaskGroupValues);
     }
 
     private static Issue copyForUpdateEvent(BoardProject.Accessor project, BoardIssue existing, String issueType, String priority,
                                             String summary, Assignee issueAssignee, Set<MultiSelectNameOnlyValue.Component> issueComponents,
                                             Set<MultiSelectNameOnlyValue.Label> labels, Set<MultiSelectNameOnlyValue.FixVersion> fixVersions,
+                                            Set<MultiSelectNameOnlyValue.AffectsVersion> affectsVersions,
                                             String state, Map<String, CustomFieldValue> customFieldValues,
                                             Map<ParallelTaskGroupPosition, Integer> parallelTaskGroupValues) {
         Builder builder = new Builder(project, existing);
@@ -260,6 +266,16 @@ public abstract class Issue {
                 changed = true;
             }
         }
+        if (affectsVersions != null) {
+            //A non-null labels means it was updated
+            if (affectsVersions.size() == 0) {
+                builder.setAffectsVersions(null);
+                changed = true;
+            } else {
+                builder.setAffectsVersions(affectsVersions);
+                changed = true;
+            }
+        }
         if (state != null) {
             changed = true;
             String currentIssueType = issueType != null ? issueType : existing.getIssueTypeName();
@@ -293,6 +309,7 @@ public abstract class Issue {
         private final Set<MultiSelectNameOnlyValue.Component> components;
         private final Set<MultiSelectNameOnlyValue.Label> labels;
         private final Set<MultiSelectNameOnlyValue.FixVersion> fixVersions;
+        private final Set<MultiSelectNameOnlyValue.AffectsVersion> affectsVersions;
         /** The index of the issue type in the owning board config */
         private final Integer issueTypeIndex;
         /** The index of the priority in the owning board config */
@@ -308,6 +325,7 @@ public abstract class Issue {
                           Integer issueTypeIndex, String issueTypeName, Integer priorityIndex, Assignee assignee,
                           Set<MultiSelectNameOnlyValue.Component> components, Set<MultiSelectNameOnlyValue.Label> labels,
                           Set<MultiSelectNameOnlyValue.FixVersion> fixVersions,
+                          Set<MultiSelectNameOnlyValue.AffectsVersion> affectsVersions,
                           String parentIssueKey, String epicKey, Integer epicIndex, List<LinkedIssue> linkedIssues,
                           Map<String, CustomFieldValue> customFieldValues,
                           List<List<Integer>> parallelTaskFieldGroupValues) {
@@ -318,6 +336,7 @@ public abstract class Issue {
             this.components = components;
             this.labels = labels;
             this.fixVersions = fixVersions;
+            this.affectsVersions = affectsVersions;
             this.parentIssueKey = parentIssueKey;
             this.epicKey = epicKey;
             this.epicIndex = epicIndex;
@@ -358,6 +377,9 @@ public abstract class Issue {
             if (fixVersions != null) {
                 fixVersions.forEach(fixVersion -> issueNode.get(Constants.FIX_VERSIONS).add(boardProject.getFixVersionIndex(fixVersion)));
             }
+            if (affectsVersions != null) {
+                affectsVersions.forEach(affectsVersion -> issueNode.get(Constants.AFFECTS_VERSIONS).add(boardProject.getAffectsVersionIndex(affectsVersion)));
+            }
             if (customFieldValues.size() > 0) {
                 final ModelNode custom = issueNode.get(Constants.CUSTOM);
                 customFieldValues.values().forEach(
@@ -392,7 +414,7 @@ public abstract class Issue {
         BoardChangeRegistry.IssueChange convertToCreateIssueChange(BoardChangeRegistry registry, BoardConfig boardConfig) {
             String issueType = boardConfig.getIssueTypeName(issueTypeIndex);
             String priority = boardConfig.getPriorityName(priorityIndex);
-            return registry.createCreateIssueChange(this, assignee, issueType, priority, components, labels, fixVersions);
+            return registry.createCreateIssueChange(this, assignee, issueType, priority, components, labels, fixVersions, affectsVersions);
         }
     }
 
@@ -433,6 +455,7 @@ public abstract class Issue {
         private Set<MultiSelectNameOnlyValue.Component> components;
         private Set<MultiSelectNameOnlyValue.Label> labels;
         private Set<MultiSelectNameOnlyValue.FixVersion> fixVersions;
+        private Set<MultiSelectNameOnlyValue.AffectsVersion> affectsVersions;
         private Integer issueTypeIndex;
         private String issueTypeName;
         private Integer priorityIndex;
@@ -474,6 +497,7 @@ public abstract class Issue {
             this.components = existing.components;
             this.labels = existing.labels;
             this.fixVersions = existing.fixVersions;
+            this.affectsVersions = existing.affectsVersions;
             this.issueTypeIndex = existing.issueTypeIndex;
             this.issueTypeName = existing.getIssueTypeName();
             this.priorityIndex = existing.priorityIndex;
@@ -500,6 +524,7 @@ public abstract class Issue {
             components = project.getComponents(issue.getComponentObjects());
             labels = project.getLabels(issue.getLabels());
             fixVersions = project.getFixVersions(issue.getFixVersions());
+            affectsVersions = project.getAffectsVersions(issue.getAffectedVersions());
             setIssueType(issue.getIssueTypeObject().getName());
             setPriority(issue.getPriorityObject().getName());
             setState(this.issueTypeName, issue.getStatusObject().getName());
@@ -537,6 +562,10 @@ public abstract class Issue {
 
         private Builder setFixVersions(Set<MultiSelectNameOnlyValue.FixVersion> fixVersions) {
             return setMultiSelectNameOnlyValue(fixVersions, set -> this.fixVersions = set);
+        }
+
+        private Builder setAffectsVersions(Set<MultiSelectNameOnlyValue.AffectsVersion> affectsVersions) {
+            return setMultiSelectNameOnlyValue(affectsVersions, set -> this.affectsVersions = set);
         }
 
         private <T extends MultiSelectNameOnlyValue> Builder setMultiSelectNameOnlyValue(
@@ -627,7 +656,7 @@ public abstract class Issue {
                         project.getConfig(), issueKey, state, stateIndex, summary,
                         issueTypeIndex, issueTypeName, priorityIndex, assignee, components,
                         labels, fixVersions,
-                        parentIssueKey, epicKey, epicIndex, linkedList,
+                        affectsVersions, parentIssueKey, epicKey, epicIndex, linkedList,
                         mergeCustomFieldValues(),
                         mergeParallelTaskFieldGroupValues());
             }

@@ -109,6 +109,7 @@ public class OverbaardIssueEventListener implements InitializingBean, Disposable
     private static final String CHANGE_LOG_CUSTOM = "custom";
     private static final String CHANGE_LOG_LABELS = "labels";
     private static final String CHANGE_LOG_FIX_VERSIONS = "Fix Version";
+    private static final String CHANGE_LOG_AFFECTED_VERSIONS = "Version"; // Strange but true!
 
     @ComponentImport
     private final EventPublisher eventPublisher;
@@ -282,7 +283,7 @@ public class OverbaardIssueEventListener implements InitializingBean, Disposable
         final OverbaardIssueEvent event = OverbaardIssueEvent.createCreateEvent(issue.getKey(), issue.getProjectObject().getKey(),
                 issue.getIssueTypeObject().getName(), issue.getPriorityObject().getName(), issue.getSummary(),
                 issue.getAssignee(), issue.getComponentObjects(), issue.getLabels(), issue.getFixVersions(),
-                issue.getStatusObject().getName(), customFieldValues);
+                issue.getAffectedVersions(), issue.getStatusObject().getName(), customFieldValues);
 
         passEventToBoardManagerOrDelay(event);
 
@@ -316,6 +317,7 @@ public class OverbaardIssueEventListener implements InitializingBean, Disposable
         Collection<ProjectComponent> components = null;
         Collection<Label> labels = null;
         Collection<Version> fixVersions = null;
+        Collection<Version> affectsVersions = null;
         String oldState = null;
         String state = null;
         boolean reranked = false;
@@ -347,6 +349,8 @@ public class OverbaardIssueEventListener implements InitializingBean, Disposable
                 labels = issue.getLabels();
             } else if (field.equals(CHANGE_LOG_FIX_VERSIONS)) {
                 fixVersions = issue.getFixVersions();
+            } else if (field.equals(CHANGE_LOG_AFFECTED_VERSIONS)) {
+                affectsVersions = issue.getAffectedVersions();
             } else if (change.get(CHANGE_LOG_FIELDTYPE).equals(CHANGE_LOG_CUSTOM)) {
                 Set<CustomFieldConfig> customFieldConfigs = boardManager.getCustomFieldsForUpdateEvent(issue.getProjectObject().getKey(), field);
                 if (customFieldConfigs.size() > 0) {
@@ -389,7 +393,7 @@ public class OverbaardIssueEventListener implements InitializingBean, Disposable
         final OverbaardIssueEvent event = OverbaardIssueEvent.createUpdateEvent(
                 issue.getKey(), issue.getProjectObject().getKey(),
                 issueType, priority,
-                summary, assignee, components, labels, fixVersions,
+                summary, assignee, components, labels, fixVersions, affectsVersions,
                 //Always pass in the existing/old state of the issue
                 oldState != null ? oldState : issue.getStatusObject().getName(),
                 state, reranked, customFieldValues);
@@ -438,7 +442,7 @@ public class OverbaardIssueEventListener implements InitializingBean, Disposable
         final OverbaardIssueEvent event = OverbaardIssueEvent.createCreateEvent(issue.getKey(), issue.getProjectObject().getKey(),
                 issue.getIssueTypeObject().getName(), issue.getPriorityObject().getName(), issue.getSummary(),
                 issue.getAssignee(), issue.getComponentObjects(), issue.getLabels(), issue.getFixVersions(),
-                newState, Collections.emptyMap());
+                issue.getAffectedVersions(), newState, Collections.emptyMap());
         passEventToBoardManagerOrDelay(event);
     }
 

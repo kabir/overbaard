@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.overbaard.jira.impl.OverbaardIssueEvent;
+import org.overbaard.jira.impl.board.MultiSelectNameOnlyValue.AffectsVersion;
 import org.overbaard.jira.impl.board.MultiSelectNameOnlyValue.Component;
 import org.overbaard.jira.impl.board.MultiSelectNameOnlyValue.FixVersion;
 import org.overbaard.jira.impl.board.MultiSelectNameOnlyValue.Label;
@@ -49,6 +50,7 @@ public class BoardChange {
     private final Set<Component> newComponents;
     private final Set<Label> newLabels;
     private final Set<FixVersion> newFixVersions;
+    private Set<AffectsVersion> newAffectsVersions;
 
     //If the blacklist was modified. We are mainly interested in if a new unmapped state/priority/type pops up, and
     //its associated issue. Also, if an issue is deleted, it should be removed from the blacklist.
@@ -70,7 +72,9 @@ public class BoardChange {
 
     private BoardChange(int view, OverbaardIssueEvent event, Assignee newAssignee,
                         Set<Component> newComponents, Set<Label> newLabels,
-                        Set<FixVersion> newFixVersions, String addedBlacklistState,
+                        Set<FixVersion> newFixVersions,
+                        Set<AffectsVersion> newAffectsVersions,
+                        String addedBlacklistState,
                         String addedBlacklistPriority, String addedBlacklistIssueType,
                         String addedBlacklistIssue, String deletedBlacklistIssue,
                         Boolean fromBacklogState, Boolean backlogState,
@@ -83,6 +87,7 @@ public class BoardChange {
         this.newComponents = newComponents;
         this.newLabels = newLabels;
         this.newFixVersions = newFixVersions;
+        this.newAffectsVersions = newAffectsVersions;
         this.addedBlacklistState = addedBlacklistState;
         this.addedBlacklistPriority = addedBlacklistPriority;
         this.addedBlacklistIssueType = addedBlacklistIssueType;
@@ -123,6 +128,11 @@ public class BoardChange {
     Set<FixVersion> getNewFixVersions() {
         return newFixVersions;
     }
+
+    Set<AffectsVersion> getNewAffectsVersions() {
+        return newAffectsVersions;
+    }
+
 
     String getAddedBlacklistState() {
         return addedBlacklistState;
@@ -172,6 +182,7 @@ public class BoardChange {
         return clearParallelTaskGroupValues;
     }
 
+
     public static class Builder {
         private final BoardChangeRegistry registry;
         private final int view;
@@ -184,6 +195,7 @@ public class BoardChange {
         private Set<Component> newComponents;
         private Set<Label> newLabels;
         private Set<FixVersion> newFixVersions;
+        private Set<AffectsVersion> newAffectsVersions;
 
         private Map<String, CustomFieldValue> newCustomFieldValues;
 
@@ -240,6 +252,11 @@ public class BoardChange {
             return this;
         }
 
+        public Builder addNewAffectsVersions(Set<AffectsVersion> newAffectsVersions) {
+            this.newAffectsVersions = Collections.unmodifiableSet(newAffectsVersions);
+            return this;
+        }
+
         public Builder setFromBacklogState(boolean fromBacklogState) {
             this.fromBacklogState = fromBacklogState;
             return this;
@@ -284,7 +301,7 @@ public class BoardChange {
 
         public void buildAndRegister() {
             BoardChange change = new BoardChange(
-                    view, event, newAssignee, newComponents, newLabels, newFixVersions, addedBlacklistState,
+                    view, event, newAssignee, newComponents, newLabels, newFixVersions, newAffectsVersions, addedBlacklistState,
                     addedBlacklistPriority, addedBlacklistIssueType, addedBlacklistIssue, deletedBlacklistIssue,
                     fromBacklogState, backlogState, customFieldValues, newCustomFieldValues,
                     parallelTaskGroupValues, clearParallelTaskGroupValues);

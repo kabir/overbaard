@@ -91,9 +91,10 @@ public class OverbaardIssueEvent {
     public static OverbaardIssueEvent createCreateEvent(String issueKey, String projectCode, String issueType, String priority,
                                                         String summary, ApplicationUser assignee, Collection<ProjectComponent> components,
                                                         Collection<Label> labels, Collection<Version> fixVersions,
+                                                        Collection<Version> affectsVersions,
                                                         String state, Map<Long, String> customFieldValues) {
         Detail detail = new Detail(issueType, priority, summary, assignee, components, labels, fixVersions,
-                null, state, true, customFieldValues);
+                affectsVersions, null, state, true, customFieldValues);
         return new OverbaardIssueEvent(Type.CREATE, issueKey, projectCode, detail);
     }
 
@@ -101,10 +102,11 @@ public class OverbaardIssueEvent {
                                                         String issueType, String priority,
                                                         String summary, ApplicationUser assignee, Collection<ProjectComponent> components,
                                                         Collection<Label> labels, Collection<Version> fixVersions,
+                                                        Collection<Version> affectsVersions,
                                                         String oldState, String state, boolean reranked,
                                                         Map<Long, String> customFieldValues) {
         Detail detail = new Detail(issueType, priority, summary, assignee, components, labels, fixVersions,
-                oldState, state, reranked, customFieldValues);
+                affectsVersions, oldState, state, reranked, customFieldValues);
         return new OverbaardIssueEvent(Type.UPDATE, issueKey, projectCode, detail);
     }
 
@@ -138,6 +140,7 @@ public class OverbaardIssueEvent {
         private final Collection<ProjectComponent> components;
         private final Collection<Label> labels;
         private final Collection<Version> fixVersions;
+        private final Collection<Version> affectsVersions;
         private final String oldState;
         private final String state;
         private final boolean reranked;
@@ -145,7 +148,7 @@ public class OverbaardIssueEvent {
 
         private Detail(String issueType, String priority, String summary, ApplicationUser assignee,
                        Collection<ProjectComponent> components, Collection<Label> labels, Collection<Version> fixVersions,
-                       String oldState, String state, boolean reranked, Map<Long, String> customFieldValues) {
+                       Collection<Version> affectsVersions, String oldState, String state, boolean reranked, Map<Long, String> customFieldValues) {
             this.summary = summary;
             this.assignee = assignee;
             this.components = components;
@@ -153,6 +156,7 @@ public class OverbaardIssueEvent {
             this.fixVersions = fixVersions;
             this.issueType = issueType;
             this.priority = priority;
+            this.affectsVersions = affectsVersions;
             this.oldState = oldState;
             this.state = state;
             this.reranked = reranked;
@@ -185,6 +189,10 @@ public class OverbaardIssueEvent {
 
         public Collection<Version> getFixVersions() {
             return fixVersions;
+        }
+
+        public Collection<Version> getAffectsVersions() {
+            return affectsVersions;
         }
 
         public String getOldState() {

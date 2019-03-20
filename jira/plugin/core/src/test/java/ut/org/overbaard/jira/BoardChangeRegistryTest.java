@@ -16,11 +16,13 @@
 package ut.org.overbaard.jira;
 
 import static org.jboss.dmr.ModelType.LIST;
+import static org.overbaard.jira.impl.Constants.AFFECTS_VERSIONS;
 import static org.overbaard.jira.impl.Constants.ASSIGNEE;
 import static org.overbaard.jira.impl.Constants.ASSIGNEES;
 import static org.overbaard.jira.impl.Constants.AVATAR;
 import static org.overbaard.jira.impl.Constants.BLACKLIST;
 import static org.overbaard.jira.impl.Constants.CHANGES;
+import static org.overbaard.jira.impl.Constants.CLEAR_AFFECTS_VERSIONS;
 import static org.overbaard.jira.impl.Constants.CLEAR_COMPONENTS;
 import static org.overbaard.jira.impl.Constants.CLEAR_FIX_VERSIONS;
 import static org.overbaard.jira.impl.Constants.CLEAR_LABELS;
@@ -95,9 +97,9 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
     public void setupIssues(AdditionalSetup additionalSetup) throws SearchException {
         if (additionalSetup == null || !additionalSetup.skipStandardIssues()) {
             issueRegistry.issueBuilder("TDP", "task", "highest", "One", "TDP-A")
-                    .assignee("kabir").components("C1").labels("L1").fixVersions("F1").buildAndRegister();     //1
+                    .assignee("kabir").affectsVersions("A1").components("C1").labels("L1").fixVersions("F1").buildAndRegister();     //1
             issueRegistry.issueBuilder("TDP", "task", "high", "Two", "TDP-B")
-                    .assignee("kabir").components("C2").labels("L2").fixVersions("F2").buildAndRegister();     //2
+                    .assignee("kabir").affectsVersions("A2").components("C2").labels("L2").fixVersions("F2").buildAndRegister();     //2
             issueRegistry.issueBuilder("TDP", "task", "low", "Three", "TDP-C")
                     .assignee("kabir").buildAndRegister();                      //3
             issueRegistry.issueBuilder("TDP", "task", "lowest", "Four", "TDP-D")
@@ -107,10 +109,10 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
             issueRegistry.issueBuilder("TDP", "bug", "high", "Six", "TDP-B")
                     .assignee("kabir").buildAndRegister();                      //6
             issueRegistry.issueBuilder("TDP", "feature", "low", "Seven", "TDP-C")
-                    .components("C1").labels("L1").fixVersions("F1").buildAndRegister();                           //7
+                    .affectsVersions("A1").components("C1").labels("L1").fixVersions("F1").buildAndRegister();                      //7
 
             issueRegistry.issueBuilder("TBG", "task", "highest", "One", "TBG-X")
-                    .assignee("kabir").components("C3").labels("L3").fixVersions("F3").buildAndRegister();     //1
+                    .assignee("kabir").affectsVersions("A3").components("C3").labels("L3").fixVersions("F3").buildAndRegister();     //1
             issueRegistry.issueBuilder("TBG", "bug", "high", "Two", "TBG-Y")
                     .assignee("kabir").buildAndRegister();                      //2
             issueRegistry.issueBuilder("TBG", "feature", "low", "Three", "TBG-X")
@@ -243,6 +245,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         //Add an issue which does not bring in new components, labels or fix versions
         OverbaardIssueEvent create = createEventBuilder("TDP-8", IssueType.BUG, Priority.HIGH, "Eight")
                 .assignee("kabir")
+                .affectsVersions("A1", "A2")
                 .components("C1", "C2")
                 .labels("L1", "L2")
                 .fixVersions("F1", "F2")
@@ -254,11 +257,12 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         checkUpdates(changesNode);
         checkAdds(changesNode,
                 new AddIssueData("TDP-8", IssueType.BUG, Priority.HIGH, "Eight", "TDP-D", "kabir")
-                        .components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"));
+                        .affectsVersions("A5", "A6").affectsVersions("A1", "A2").components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"));
 
         //Now add an issue which brings in new components, labels and fix versions
         create = createEventBuilder("TBG-4", IssueType.FEATURE, Priority.LOW, "Four")
                 .assignee("kabir")
+                .affectsVersions("A5", "A6")
                 .components("C5", "C6")
                 .labels("L5", "L6")
                 .fixVersions("F5", "F6")
@@ -267,6 +271,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         boardManager.handleEvent(create, nextRankedIssueUtil);
         //0 -> 2
         changesNode = getChangesJson(0, 2,
+                new NewAffectsVersionsChecker("A5", "A6"),
                 new NewComponentsChecker("C5", "C6"),
                 new NewLabelsChecker("L5", "L6"),
                 new NewFixVersionsChecker("F5", "F6"),
@@ -275,11 +280,12 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         checkUpdates(changesNode);
         checkAdds(changesNode,
                 new AddIssueData("TDP-8", IssueType.BUG, Priority.HIGH, "Eight", "TDP-D", "kabir")
-                        .components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"),
+                        .affectsVersions("A1", "A2").components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"),
                 new AddIssueData("TBG-4", IssueType.FEATURE, Priority.LOW, "Four", "TBG-X", "kabir")
-                        .components("C5", "C6").labels("L5", "L6").fixVersions("F5", "F6"));
+                        .affectsVersions("A5", "A6").components("C5", "C6").labels("L5", "L6").fixVersions("F5", "F6"));
         //1 -> 2
         changesNode = getChangesJson(1, 2,
+                new NewAffectsVersionsChecker("A5", "A6"),
                 new NewComponentsChecker("C5", "C6"),
                 new NewLabelsChecker("L5", "L6"),
                 new NewFixVersionsChecker("F5", "F6"),
@@ -288,7 +294,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         checkUpdates(changesNode);
         checkAdds(changesNode,
                 new AddIssueData("TBG-4", IssueType.FEATURE, Priority.LOW, "Four", "TBG-X", "kabir")
-                        .components("C5", "C6").labels("L5", "L6").fixVersions("F5", "F6"));
+                        .affectsVersions("A5", "A6").components("C5", "C6").labels("L5", "L6").fixVersions("F5", "F6"));
 
 
         //Add another one not bringing in new components, labels of fix versions
@@ -298,6 +304,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         boardManager.handleEvent(create, nextRankedIssueUtil);
         //0 -> 3
         changesNode = getChangesJson(0, 3,
+                new NewAffectsVersionsChecker("A5", "A6"),
                 new NewComponentsChecker("C5", "C6"),
                 new NewLabelsChecker("L5", "L6"),
                 new NewFixVersionsChecker("F5", "F6"),
@@ -306,12 +313,13 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         checkUpdates(changesNode);
         checkAdds(changesNode,
                 new AddIssueData("TDP-8", IssueType.BUG, Priority.HIGH, "Eight", "TDP-D", "kabir")
-                        .components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"),
+                        .affectsVersions("A1", "A2").components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"),
                 new AddIssueData("TBG-4", IssueType.FEATURE, Priority.LOW, "Four", "TBG-X", "kabir")
-                        .components("C5", "C6").labels("L5", "L6").fixVersions("F5", "F6"),
+                        .affectsVersions("A5", "A6").components("C5", "C6").labels("L5", "L6").fixVersions("F5", "F6"),
                 new AddIssueData("TDP-9", IssueType.BUG, Priority.HIGH, "Nine", "TDP-D", null));
         //1 -> 3
         changesNode = getChangesJson(1, 3,
+                new NewAffectsVersionsChecker("A5", "A6"),
                 new NewComponentsChecker("C5", "C6"),
                 new NewLabelsChecker("L5", "L6"),
                 new NewFixVersionsChecker("F5", "F6"),
@@ -320,7 +328,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         checkUpdates(changesNode);
         checkAdds(changesNode,
                 new AddIssueData("TBG-4", IssueType.FEATURE, Priority.LOW, "Four", "TBG-X", "kabir")
-                        .components("C5", "C6").labels("L5", "L6").fixVersions("F5", "F6"),
+                        .affectsVersions("A5", "A6").components("C5", "C6").labels("L5", "L6").fixVersions("F5", "F6"),
                 new AddIssueData("TDP-9", IssueType.BUG, Priority.HIGH, "Nine", "TDP-D", null));
         //2 -> 3
         changesNode = getChangesJson(2, 3, new NewRankChecker().rank(8, "TDP-9"));
@@ -575,49 +583,51 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
     public void testUpdateSameIssueMultiSelectNameOnlyValues() throws Exception {
         //Do an update not bringing in any new data
         OverbaardIssueEvent update = updateEventBuilder("TDP-7")
-                .components("C1").labels("L1").fixVersions("F1").buildAndRegister();
+                .affectsVersions("A1").components("C1").labels("L1").fixVersions("F1").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         ModelNode changes = getChangesJson(0, 1);
         checkDeletes(changes);
-        checkUpdates(changes, new UpdateIssueData("TDP-7").components("C1").labels("L1").fixVersions("F1"));
+        checkUpdates(changes, new UpdateIssueData("TDP-7").affectsVersions("A1").components("C1").labels("L1").fixVersions("F1"));
         checkAdds(changes);
 
-        update = updateEventBuilder("TDP-7").clearComponents().clearLabels().clearFixVersions().buildAndRegister();
+        update = updateEventBuilder("TDP-7").clearAffectsVersions().clearComponents().clearLabels().clearFixVersions().buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         for (int i = 0; i <= 1; i++) {
             changes = getChangesJson(i, 2);
             checkDeletes(changes);
-            checkUpdates(changes, new UpdateIssueData("TDP-7").clearedComponents().clearedLabels().clearedFixVersions());
+            checkUpdates(changes, new UpdateIssueData("TDP-7").clearedAffectsVersions().clearedComponents().clearedLabels().clearedFixVersions());
             checkAdds(changes);
         }
-        update = updateEventBuilder("TDP-7").components("C-10").labels("L-10").fixVersions("F-10").buildAndRegister();
+        update = updateEventBuilder("TDP-7").affectsVersions("A-10").components("C-10").labels("L-10").fixVersions("F-10").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         for (int i = 0; i <= 2; i++) {
             changes = getChangesJson(i, 3,
+                    new NewAffectsVersionsChecker("A-10"),
                     new NewComponentsChecker("C-10"),
                     new NewLabelsChecker("L-10"),
                     new NewFixVersionsChecker("F-10"));
             checkDeletes(changes);
-            checkUpdates(changes, new UpdateIssueData("TDP-7").components("C-10").labels("L-10").fixVersions("F-10"));
+            checkUpdates(changes, new UpdateIssueData("TDP-7").affectsVersions("A-10").components("C-10").labels("L-10").fixVersions("F-10"));
             checkAdds(changes);
         }
 
-        update = updateEventBuilder("TDP-7").components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2").buildAndRegister();
+        update = updateEventBuilder("TDP-7").affectsVersions("A1", "A2").components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         //0. 1 and 2 -> 4
         for (int i = 0; i <= 2; i++) {
             changes = getChangesJson(i, 4,
+                    new NewAffectsVersionsChecker("A-10"),
                     new NewComponentsChecker("C-10"),
                     new NewLabelsChecker("L-10"),
                     new NewFixVersionsChecker("F-10"));
             checkDeletes(changes);
-            checkUpdates(changes, new UpdateIssueData("TDP-7").components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"));
+            checkUpdates(changes, new UpdateIssueData("TDP-7").affectsVersions("A1", "A2").components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"));
             checkAdds(changes);
         }
         //3 -> 4
         changes = getChangesJson(3, 4);
         checkDeletes(changes);
-        checkUpdates(changes, new UpdateIssueData("TDP-7").components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"));
+        checkUpdates(changes, new UpdateIssueData("TDP-7").affectsVersions("A1", "A2").components("C1", "C2").labels("L1", "L2").fixVersions("F1", "F2"));
         checkAdds(changes);
     }
 
@@ -1226,7 +1236,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         ModelNode nonBacklogChanges = getChangesJson(0, 1, new NewRankChecker().rank(1, "TDP-2"));
         checkAdds(nonBacklogChanges,
                 new AddIssueData("TDP-2", IssueType.TASK, Priority.HIGH, "Two", "TDP-C", "kabir")
-                        .components("C2").labels("L2").fixVersions("F2"));
+                        .affectsVersions("A2").components("C2").labels("L2").fixVersions("F2"));
         checkDeletes(nonBacklogChanges);
         checkUpdates(nonBacklogChanges);
     }
@@ -1462,7 +1472,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         //The move from the backlog to a normal state appears as an add
         checkAdds(nonBacklogChanges,
                 new AddIssueData("TDP-1", IssueType.TASK, Priority.HIGHEST, "One", "TDP-C", "kabir")
-                        .components("C1").labels("L1").fixVersions("F1"));
+                        .affectsVersions("A1").components("C1").labels("L1").fixVersions("F1"));
         checkUpdates(nonBacklogChanges);
         checkDeletes(nonBacklogChanges);
 
@@ -1486,7 +1496,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         //The move from the backlog to a nornal state appears as an add
         checkAdds(nonBacklogChanges,
                 new AddIssueData("TDP-1", IssueType.TASK, Priority.HIGHEST, "One", "TDP-D", "kabir")
-                        .components("C1").labels("L1").fixVersions("F1"));
+                        .affectsVersions("A1").components("C1").labels("L1").fixVersions("F1"));
         checkUpdates(nonBacklogChanges);
         checkDeletes(nonBacklogChanges);
 
@@ -2453,6 +2463,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
                 checkIssueComponents(expected.components, issue);
                 checkIssueLabels(expected.labels, issue);
                 checkIssueFixVersions(expected.fixVersions, issue);
+                checkIssueAffectsVersions(expected.affectsVersions, issue);
                 runIssueCheckers(issue, expected);
             }
         }
@@ -2492,6 +2503,8 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
                 checkClearedLabels(expected, issue);
                 checkIssueFixVersions(expected.fixVersions, issue);
                 checkClearedFixVersions(expected, issue);
+                checkIssueAffectsVersions(expected.affectsVersions, issue);
+                checkClearedAffectsVersions(expected, issue);
 
                 runIssueCheckers(issue, expected);
             }
@@ -2508,6 +2521,10 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
 
     private void checkClearedFixVersions(UpdateIssueData expected, ModelNode issue) {
         checkClearedMultiSelectNameOnlyValue(expected.clearedFixVersions, issue, CLEAR_FIX_VERSIONS);
+    }
+
+    private void checkClearedAffectsVersions(UpdateIssueData expected, ModelNode issue) {
+        checkClearedMultiSelectNameOnlyValue(expected.clearedAffectsVersions, issue, CLEAR_AFFECTS_VERSIONS);
     }
 
     private void checkClearedMultiSelectNameOnlyValue(boolean expected, ModelNode issue, String name) {
@@ -2529,6 +2546,12 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
     private void checkIssueFixVersions(String[] expectedComponents, ModelNode issue) {
         checkIssueMultiSelectValues(expectedComponents, issue, FIX_VERSIONS);
     }
+
+    private void checkIssueAffectsVersions(String[] expectedAffectsVersions, ModelNode issue) {
+        checkIssueMultiSelectValues(expectedAffectsVersions, issue, AFFECTS_VERSIONS);
+    }
+
+
 
     private void checkIssueMultiSelectValues(String[] expectedValues, ModelNode issue, String name) {
         if (expectedValues == null || expectedValues.length == 0) {
@@ -2599,6 +2622,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         checkersMap.put(NewComponentsChecker.class, NewComponentsChecker.NONE);
         checkersMap.put(NewLabelsChecker.class, NewLabelsChecker.NONE);
         checkersMap.put(NewFixVersionsChecker.class, NewFixVersionsChecker.NONE);
+        checkersMap.put(NewAffectsVersionsChecker.class, NewAffectsVersionsChecker.NONE);
         checkersMap.put(NewCustomFieldChecker.class, NewCustomFieldChecker.NONE);
         checkersMap.put(NewRankChecker.class, NewRankChecker.NONE);
         checkersMap.put(NewBlackListChecker.class, NewBlackListChecker.NONE);
@@ -2641,6 +2665,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         String[] components;
         String[] labels;
         String[] fixVersions;
+        String[] affectsVersions;
         IssueChecker[] issueCheckers;
 
         protected IssueData(String key, IssueType type, Priority priority, String summary, String state, String assignee) {
@@ -2678,6 +2703,11 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
             return this;
         }
 
+        AddIssueData affectsVersions(String... affectsVersions) {
+            this.affectsVersions = affectsVersions;
+            return this;
+        }
+
         AddIssueData checkers(IssueChecker... checkers) {
             this.issueCheckers = checkers;
             return this;
@@ -2688,6 +2718,7 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         boolean clearedComponents;
         boolean clearedLabels;
         boolean clearedFixVersions;
+        boolean clearedAffectsVersions;
 
         UpdateIssueData(String key) {
             super(key);
@@ -2758,6 +2789,18 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
         UpdateIssueData clearedFixVersions() {
             Assert.assertNull(this.fixVersions);
             this.clearedFixVersions = true;
+            return this;
+        }
+
+        UpdateIssueData affectsVersions(String... affectsVersions) {
+            Assert.assertFalse(this.clearedAffectsVersions);
+            this.affectsVersions = affectsVersions;
+            return this;
+        }
+
+        UpdateIssueData clearedAffectsVersions() {
+            Assert.assertNull(this.affectsVersions);
+            this.clearedAffectsVersions = true;
             return this;
         }
 
@@ -3022,6 +3065,14 @@ public class BoardChangeRegistryTest extends AbstractBoardTest {
 
         NewFixVersionsChecker(String... expectedFixVersions) {
             super(FIX_VERSIONS, expectedFixVersions);
+        }
+    }
+
+    private static class NewAffectsVersionsChecker extends NewMultiSelectNameOnlyValueChecker {
+        static final NewAffectsVersionsChecker NONE = new NewAffectsVersionsChecker();
+
+        NewAffectsVersionsChecker(String... expectedAffectsVersions) {
+            super(AFFECTS_VERSIONS, expectedAffectsVersions);
         }
     }
 
