@@ -104,6 +104,10 @@ public class BoardProject {
         return board.getFixVersionIndex(fixVersion);
     }
 
+    int getAffectsVersionIndex(MultiSelectNameOnlyValue.AffectsVersion affectsVersion) {
+        return board.getAffectsVersionIndex(affectsVersion);
+    }
+
     public int getCustomFieldValueIndex(CustomFieldValue customFieldValue) {
         return board.getCustomFieldIndex(customFieldValue);
     }
@@ -377,6 +381,10 @@ public class BoardProject {
             return board.getFixVersions(fixVersions);
         }
 
+        public Set<MultiSelectNameOnlyValue.AffectsVersion> getAffectsVersions(Collection<Version> affectsVersions) {
+            return board.getAffectsVersions(affectsVersions);
+        }
+
         public Board.Accessor getBoard() {
             return board;
         }
@@ -588,13 +596,15 @@ public class BoardProject {
 
         Issue createIssue(String issueKey, String issueType, String priority, String summary,
                           Assignee assignee, Set<MultiSelectNameOnlyValue.Component> issueComponents,
-                          Set<MultiSelectNameOnlyValue.Label> labels, Set<MultiSelectNameOnlyValue.FixVersion> fixVersions, String state,
+                          Set<MultiSelectNameOnlyValue.Label> labels, Set<MultiSelectNameOnlyValue.FixVersion> fixVersions,
+                          Set<MultiSelectNameOnlyValue.AffectsVersion> affectsVersions,
+                          String state,
                           Map<String, CustomFieldValue> customFieldValues,
                           Map<ParallelTaskGroupPosition, Integer> parallelTaskGroupValues) throws SearchException {
             OverbaardLogger.LOGGER.debug("BoardProject.Updater.createIssue - {}", issueKey);
             newIssue = Issue.createForCreateEvent(
                     this, issueKey, state, summary, issueType, priority,
-                    assignee, issueComponents, labels, fixVersions, customFieldValues,
+                    assignee, issueComponents, labels, fixVersions, affectsVersions, customFieldValues,
                     parallelTaskGroupValues);
             OverbaardLogger.LOGGER.debug("BoardProject.Updater.createIssue - created {}", newIssue);
 
@@ -606,12 +616,14 @@ public class BoardProject {
 
         Issue updateIssue(Issue existing, String issueType, String priority, String summary,
                           Assignee issueAssignee, Set<MultiSelectNameOnlyValue.Component> issueComponents,
-                          Set<MultiSelectNameOnlyValue.Label> labels, Set<MultiSelectNameOnlyValue.FixVersion> fixVersions, boolean reranked,
+                          Set<MultiSelectNameOnlyValue.Label> labels, Set<MultiSelectNameOnlyValue.FixVersion> fixVersions,
+                          Set<MultiSelectNameOnlyValue.AffectsVersion> affectsVersions,
+                          boolean reranked,
                           String state, Map<String, CustomFieldValue> customFieldValues,
                           Map<ParallelTaskGroupPosition, Integer> parallelTaskGroupValues) throws SearchException {
             OverbaardLogger.LOGGER.debug("BoardProject.Updater.updateIssue - {}, rankOrStateChanged: {}", existing.getKey(), reranked);
             newIssue = existing.copyForUpdateEvent(this, existing, issueType, priority,
-                    summary, issueAssignee, issueComponents, labels, fixVersions,
+                    summary, issueAssignee, issueComponents, labels, fixVersions, affectsVersions,
                     state, customFieldValues, parallelTaskGroupValues);
             OverbaardLogger.LOGGER.debug("BoardProject.Updater - updated issue {} to {}. Reranked: {}", existing, newIssue, reranked);
             if (reranked) {

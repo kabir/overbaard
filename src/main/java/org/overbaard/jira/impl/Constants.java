@@ -19,6 +19,7 @@ package org.overbaard.jira.impl;
  * @author Kabir Khan
  */
 public class Constants {
+    public static final String AFFECTS_VERSIONS = "affects-versions";
     public static final String API_VERSION = "api-version";
     public static final String ASSIGNEE = "assignee";
     public static final String ASSIGNEES = "assignees";
@@ -29,6 +30,7 @@ public class Constants {
     public static final String CAN_EDIT_CUSTOM_FIELDS = "can-edit-custom-fields";
     public static final String CODE = "code";
     public static final String CHANGES = "changes";
+    public static final String CLEAR_AFFECTS_VERSIONS = "clear-affects-versions";
     public static final String CLEAR_COMPONENTS = "clear-components";
     public static final String CLEAR_FIX_VERSIONS = "clear-fix-versions";
     public static final String CLEAR_LABELS = "clear-labels";

@@ -77,4 +77,10 @@ public abstract class MultiSelectNameOnlyValue {
             super(name);
         }
     }
+
+    public static class AffectsVersion extends MultiSelectNameOnlyValue {
+        public AffectsVersion(String name) {
+            super(name);
+        }
+    }
 }

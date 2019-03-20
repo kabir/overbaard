@@ -212,6 +212,7 @@ public abstract class AbstractBoardTest {
         private Set<ProjectComponent> components;
         private Set<Label> labels;
         private Set<Version> fixVersions;
+        private Set<Version> affectsVersions;
         private String state;
         private Map<Long, String> customFieldValues;
 
@@ -235,6 +236,10 @@ public abstract class AbstractBoardTest {
 
         void fixVersions(String... fixVersionNames) {
             this.fixVersions = MockVersion.createVersions(fixVersionNames);
+        }
+
+        void affectsVersions(String... affectsVersionNames) {
+            this.affectsVersions = MockVersion.createVersions(affectsVersionNames);
         }
     }
 
@@ -268,6 +273,11 @@ public abstract class AbstractBoardTest {
             return this;
         }
 
+        CreateEventBuilder affectsVersions(String... affectsVersionNames) {
+            delegate.affectsVersions(affectsVersionNames);
+            return this;
+        }
+
         CreateEventBuilder state(String state) {
             delegate.state = state;
             return this;
@@ -289,6 +299,7 @@ public abstract class AbstractBoardTest {
                     delegate.components,
                     delegate.labels,
                     delegate.fixVersions,
+                    delegate.affectsVersions,
                     delegate.state,
                     delegate.customFieldValues);
 
@@ -323,6 +334,7 @@ public abstract class AbstractBoardTest {
         private boolean clearComponents;
         private boolean clearLabels;
         private boolean clearFixVersions;
+        private boolean clearAffectsVersions;
         private boolean rank;
 
         UpdateEventBuilder(String issueKey) {
@@ -379,6 +391,11 @@ public abstract class AbstractBoardTest {
             return this;
         }
 
+        UpdateEventBuilder affectsVersions(String... affectsVersionName) {
+            delegate.affectsVersions(affectsVersionName);
+            return this;
+        }
+
         UpdateEventBuilder clearComponents() {
             clearComponents = true;
             return this;
@@ -391,6 +408,11 @@ public abstract class AbstractBoardTest {
 
         UpdateEventBuilder clearFixVersions() {
             clearFixVersions = true;
+            return this;
+        }
+
+        UpdateEventBuilder clearAffectsVersions() {
+            clearAffectsVersions = true;
             return this;
         }
 
@@ -426,6 +448,10 @@ public abstract class AbstractBoardTest {
                 Assert.assertNull(delegate.fixVersions);
                 delegate.fixVersions = Collections.emptySet();
             }
+            if (clearAffectsVersions) {
+                Assert.assertNull(delegate.affectsVersions);
+                delegate.affectsVersions = Collections.emptySet();
+            }
             Issue issue = issueRegistry.getIssue(delegate.issueKey);
             OverbaardIssueEvent update = OverbaardIssueEvent.createUpdateEvent(
                     delegate.issueKey,
@@ -437,6 +463,7 @@ public abstract class AbstractBoardTest {
                     delegate.components,
                     delegate.labels,
                     delegate.fixVersions,
+                    delegate.affectsVersions,
                     issue.getStatusObject().getName(),
                     delegate.state,
                     rank,
@@ -451,6 +478,7 @@ public abstract class AbstractBoardTest {
                     delegate.components,
                     delegate.labels,
                     delegate.fixVersions,
+                    delegate.affectsVersions,
                     delegate.state);
             if (delegate.customFieldValues != null) {
                 for (Map.Entry<Long, String> entry : delegate.customFieldValues.entrySet()) {

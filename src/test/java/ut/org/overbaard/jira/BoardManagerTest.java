@@ -15,6 +15,7 @@
  */
 package ut.org.overbaard.jira;
 
+import static org.overbaard.jira.impl.Constants.AFFECTS_VERSIONS;
 import static org.overbaard.jira.impl.Constants.ASSIGNEE;
 import static org.overbaard.jira.impl.Constants.ASSIGNEES;
 import static org.overbaard.jira.impl.Constants.AVATAR;
@@ -397,13 +398,13 @@ public class BoardManagerTest extends AbstractBoardTest {
     @Test
     public void testLoadBoardOnlyOwnerProjectIssues() throws Exception {
         issueRegistry.issueBuilder("TDP", "task", "highest", "One", "TDP-A")
-                .assignee("kabir").components("C1").fixVersions("F1").buildAndRegister();
+                .assignee("kabir").affectsVersions("A1").components("C1").fixVersions("F1").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "high", "Two", "TDP-B")
                 .assignee("kabir").components("C1").labels("L2").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "low", "Three", "TDP-C")
-                .assignee("kabir").components("C1", "C2").labels("L1", "L2", "L3").fixVersions("F2", "F3").buildAndRegister();
+                .assignee("kabir").affectsVersions("A1", "A2").components("C1", "C2").labels("L1", "L2", "L3").fixVersions("F2", "F3").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "lowest", "Four", "TDP-D")
-                .assignee("brian").buildAndRegister();
+                .assignee("brian").affectsVersions("A3").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "highest", "Five", "TDP-A")
                 .assignee("kabir").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "bug", "high", "Six", "TDP-B")
@@ -415,18 +416,19 @@ public class BoardManagerTest extends AbstractBoardTest {
                 new BoardAssigneeChecker("brian", "kabir"),
                 new BoardComponentsChecker("C1", "C2"),
                 new BoardLabelsChecker("L1", "L2", "L3"),
-                new BoardFixVersionsChecker("F1", "F2", "F3"));
+                new BoardFixVersionsChecker("F1", "F2", "F3"),
+                new BoardAffectsVersionsChecker("A1", "A2", "A3"));
         checkNameAndColour(boardNode, "priorities", "highest", "high", "low", "lowest");
         checkNameAndColour(boardNode, "issue-types", "task", "bug", "feature");
 
         ModelNode allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1,
                 new ComponentsChecker(0), new LabelsChecker(1), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2,
-                new ComponentsChecker(0, 1), new LabelsChecker(0, 1, 2), new FixVersionsChecker(1, 2), new AssigneeChecker(1));
-        checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
+                new AffectsVersionsChecker(0, 1), new ComponentsChecker(0, 1), new LabelsChecker(0, 1, 2), new FixVersionsChecker(1, 2), new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3, new AffectsVersionsChecker(2), new AssigneeChecker(0));
         checkIssue(allIssues, "TDP-5", IssueType.TASK, Priority.HIGHEST, "Five", 0, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-6", IssueType.BUG, Priority.HIGH, "Six", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-7", IssueType.FEATURE, Priority.LOW, "Seven", 2);
@@ -463,9 +465,9 @@ public class BoardManagerTest extends AbstractBoardTest {
     @Test
     public void testLoadBoard() throws Exception {
         issueRegistry.issueBuilder("TDP", "task", "highest", "One", "TDP-A")
-                .assignee("kabir").components("C1").buildAndRegister();
+                .assignee("kabir").affectsVersions("A1").components("C1").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "high", "Two", "TDP-B")
-                .assignee("kabir").components("C2").labels("L1").fixVersions("F1").buildAndRegister();
+                .assignee("kabir").affectsVersions("A2").components("C2").labels("L1").fixVersions("F1").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "low", "Three", "TDP-C")
                 .assignee("kabir").fixVersions("F1").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "lowest", "Four", "TDP-D")
@@ -477,7 +479,7 @@ public class BoardManagerTest extends AbstractBoardTest {
         issueRegistry.issueBuilder("TDP", "feature", "low", "Seven", "TDP-C")
                 .buildAndRegister();
         issueRegistry.issueBuilder("TBG", "task", "highest", "One", "TBG-X")
-                .assignee("kabir").components("C3").buildAndRegister();
+                .assignee("kabir").affectsVersions("A3", "A4").components("C3").buildAndRegister();
         issueRegistry.issueBuilder("TBG", "bug", "high", "Two", "TBG-Y")
                 .assignee("kabir").labels("L1", "L2").fixVersions("F1", "F2").buildAndRegister();
         issueRegistry.issueBuilder("TBG", "feature", "low", "Three", "TBG-X")
@@ -487,14 +489,17 @@ public class BoardManagerTest extends AbstractBoardTest {
 
         ModelNode boardNode = getJson(0, new BoardAssigneeChecker("brian", "jason", "kabir"),
                 new BoardComponentsChecker("C1", "C2", "C3"),
-                new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"),
+                new BoardAffectsVersionsChecker("A1", "A2", "A3", "A4"));
         checkNameAndColour(boardNode, "priorities", "highest", "high", "low", "lowest");
         checkNameAndColour(boardNode, "issue-types", "task", "bug", "feature");
 
         ModelNode allIssues = getIssuesCheckingSize(boardNode, 11);
-        checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0, new ComponentsChecker(0), new AssigneeChecker(2));
+        checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1,
-                new ComponentsChecker(1), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(2));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2,
                 new FixVersionsChecker(0), new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3,
@@ -502,7 +507,8 @@ public class BoardManagerTest extends AbstractBoardTest {
         checkIssue(allIssues, "TDP-5", IssueType.TASK, Priority.HIGHEST, "Five", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-6", IssueType.BUG, Priority.HIGH, "Six", 1, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-7", IssueType.FEATURE, Priority.LOW, "Seven", 2);
-        checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0, new ComponentsChecker(2), new AssigneeChecker(2));
+        checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
+                new AffectsVersionsChecker(2, 3), new ComponentsChecker(2), new AssigneeChecker(2));
         checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1,
                 new LabelsChecker(0, 1), new FixVersionsChecker(0, 1), new AssigneeChecker(2));
         checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0);
@@ -644,7 +650,7 @@ public class BoardManagerTest extends AbstractBoardTest {
     @Test
     public void testAddIssuesNoNewUsersOrMultiSelectNameOnlyValues() throws Exception {
         issueRegistry.issueBuilder("TDP", "task", "highest", "One", "TDP-A")
-                .components("C1").labels("L1").fixVersions("F1").buildAndRegister();
+                .affectsVersions("A1").components("C1").labels("L1").fixVersions("F1").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "high", "Two", "TDP-B")
                 .assignee("kabir").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "low", "Three", "TDP-C")
@@ -659,24 +665,31 @@ public class BoardManagerTest extends AbstractBoardTest {
                 .buildAndRegister();
 
         getJson(0, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1"), new BoardLabelsChecker("L1"), new BoardFixVersionsChecker("F1"));
+                new BoardComponentsChecker("C1"), new BoardLabelsChecker("L1"),
+                new BoardFixVersionsChecker("F1"), new BoardAffectsVersionsChecker("A1"));
 
         OverbaardIssueEvent create = createEventBuilder("TDP-5", IssueType.FEATURE, Priority.HIGH, "Five")
                 .assignee("kabir")
+                .affectsVersions("A1")
                 .components("C1")
+                .fixVersions("F1")
+                .labels("L1")
                 .state("TDP-B")
                 .buildAndRegister();
         boardManager.handleEvent(create, nextRankedIssueUtil);
         ModelNode boardNode = getJson(1, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1"), new BoardLabelsChecker("L1"), new BoardFixVersionsChecker("F1"));
+                new BoardComponentsChecker("C1"), new BoardLabelsChecker("L1"),
+                new BoardFixVersionsChecker("F1"), new BoardAffectsVersionsChecker("A1"));
 
         ModelNode allIssues = getIssuesCheckingSize(boardNode, 8);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0),
+                new LabelsChecker(0), new FixVersionsChecker(0));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
-        checkIssue(allIssues, "TDP-5", IssueType.FEATURE, Priority.HIGH, "Five", 1, new ComponentsChecker(0), new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-5", IssueType.FEATURE, Priority.HIGH, "Five", 1,
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new FixVersionsChecker(0), new LabelsChecker(0), new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0);
@@ -686,24 +699,31 @@ public class BoardManagerTest extends AbstractBoardTest {
 
 
         create = createEventBuilder("TBG-4", IssueType.FEATURE, Priority.HIGH, "Four")
+                .affectsVersions("A1")
                 .components("C1")
+                .fixVersions("F1")
+                .labels("L1")
                 .state("TBG-X")
                 .buildAndRegister();
         boardManager.handleEvent(create, nextRankedIssueUtil);
         boardNode = getJson(2, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1"), new BoardLabelsChecker("L1"), new BoardFixVersionsChecker("F1"));
+                new BoardComponentsChecker("C1"), new BoardLabelsChecker("L1"),
+                new BoardFixVersionsChecker("F1"), new BoardAffectsVersionsChecker("A1"));
 
         allIssues = getIssuesCheckingSize(boardNode, 9);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
+                new ComponentsChecker(0), new LabelsChecker(0),
+                new FixVersionsChecker(0), new AffectsVersionsChecker(0));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
-        checkIssue(allIssues, "TDP-5", IssueType.FEATURE, Priority.HIGH, "Five", 1, new ComponentsChecker(0), new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-5", IssueType.FEATURE, Priority.HIGH, "Five", 1,
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new FixVersionsChecker(0), new LabelsChecker(0), new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0);
-        checkIssue(allIssues, "TBG-4", IssueType.FEATURE, Priority.HIGH, "Four", 0, new ComponentsChecker(0));
+        checkIssue(allIssues, "TBG-4", IssueType.FEATURE, Priority.HIGH, "Four", 0,
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new FixVersionsChecker(0), new LabelsChecker(0));
 
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4, 5);
         checkProjectRankedIssues(boardNode, "TBG", 1, 2, 3, 4);
@@ -774,15 +794,15 @@ public class BoardManagerTest extends AbstractBoardTest {
     @Test
     public void testAddIssuesNewMultiSelectNameOnlyValues() throws Exception {
         issueRegistry.issueBuilder("TDP", "task", "highest", "One", "TDP-A")
-                .components("CE", "CG").labels("LE", "LG").fixVersions("FE", "FG").buildAndRegister();
+                .affectsVersions("AE", "AG").components("CE", "CG").labels("LE", "LG").fixVersions("FE", "FG").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "high", "Two", "TDP-B")
-                .assignee("kabir").components("CC").labels("LC").fixVersions("FC").buildAndRegister();
+                .affectsVersions("AC").assignee("kabir").components("CC").labels("LC").fixVersions("FC").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "low", "Three", "TDP-C")
-                .assignee("kabir").components("CI").labels("LI").fixVersions("FI").buildAndRegister();
+                .assignee("kabir").affectsVersions("AI").components("CI").labels("LI").fixVersions("FI").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "lowest", "Four", "TDP-D")
                 .assignee("brian").buildAndRegister();
         issueRegistry.issueBuilder("TBG", "task", "highest", "One", "TBG-X")
-                .assignee("kabir").components("CN").labels("LN").fixVersions("FN").buildAndRegister();
+                .assignee("kabir").affectsVersions("AN").components("CN").labels("LN").fixVersions("FN").buildAndRegister();
         issueRegistry.issueBuilder("TBG", "bug", "high", "Two", "TBG-Y")
                 .assignee("kabir").buildAndRegister();
         issueRegistry.issueBuilder("TBG", "feature", "low", "Three", "TBG-X")
@@ -791,7 +811,8 @@ public class BoardManagerTest extends AbstractBoardTest {
         getJson(0, new BoardAssigneeChecker("brian", "kabir"),
                 new BoardComponentsChecker("CC", "CE", "CG", "CI", "CN"),
                 new BoardLabelsChecker("LC", "LE", "LG", "LI", "LN"),
-                new BoardFixVersionsChecker("FC", "FE", "FG", "FI", "FN"));
+                new BoardFixVersionsChecker("FC", "FE", "FG", "FI", "FN"),
+                new BoardAffectsVersionsChecker("AC", "AE", "AG", "AI", "AN"));
 
         //Add an issue with a single new component
         OverbaardIssueEvent create = createEventBuilder("TDP-5", IssueType.FEATURE, Priority.HIGH, "Five")
@@ -803,19 +824,21 @@ public class BoardManagerTest extends AbstractBoardTest {
         ModelNode boardNode = getJson(1, new BoardAssigneeChecker("brian", "kabir"),
                 new BoardComponentsChecker("CC", "CE", "CF", "CG", "CI", "CN"),
                 new BoardLabelsChecker("LC", "LE", "LG", "LI", "LN"),
-                new BoardFixVersionsChecker("FC", "FE", "FG", "FI", "FN"));
+                new BoardFixVersionsChecker("FC", "FE", "FG", "FI", "FN"),
+                new BoardAffectsVersionsChecker("AC", "AE", "AG", "AI", "AN"));
 
         ModelNode allIssues = getIssuesCheckingSize(boardNode, 8);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(1, 3), new LabelsChecker(1, 2), new FixVersionsChecker(1, 2));
-        checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1, 2), new ComponentsChecker(1, 3), new LabelsChecker(1, 2), new FixVersionsChecker(1, 2));
+        checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1,
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2,
-                new ComponentsChecker(4), new LabelsChecker(3), new FixVersionsChecker(3), new AssigneeChecker(1));
+                new AffectsVersionsChecker(3), new ComponentsChecker(4), new LabelsChecker(3), new FixVersionsChecker(3), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
         checkIssue(allIssues, "TDP-5", IssueType.FEATURE, Priority.HIGH, "Five", 1,
                 new ComponentsChecker(2), new AssigneeChecker(0));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(5), new LabelsChecker(4), new FixVersionsChecker(4), new AssigneeChecker(1));
+                new AffectsVersionsChecker(4), new ComponentsChecker(5), new LabelsChecker(4), new FixVersionsChecker(4), new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0);
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4, 5);
@@ -831,22 +854,23 @@ public class BoardManagerTest extends AbstractBoardTest {
         boardNode = getJson(2, new BoardAssigneeChecker("brian", "kabir"),
                 new BoardComponentsChecker("CC", "CE", "CF", "CG", "CI", "CN"),
                 new BoardLabelsChecker("LC", "LE", "LF", "LG", "LI", "LN"),
-                new BoardFixVersionsChecker("FC", "FE", "FG", "FI", "FN"));
+                new BoardFixVersionsChecker("FC", "FE", "FG", "FI", "FN"),
+                new BoardAffectsVersionsChecker("AC", "AE", "AG", "AI", "AN"));
 
         allIssues = getIssuesCheckingSize(boardNode, 9);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(1, 3), new LabelsChecker(1, 3), new FixVersionsChecker(1, 2));
+                new AffectsVersionsChecker(1, 2), new ComponentsChecker(1, 3), new LabelsChecker(1, 3), new FixVersionsChecker(1, 2));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2,
-                new ComponentsChecker(4), new LabelsChecker(4), new FixVersionsChecker(3), new AssigneeChecker(1));
+                new AffectsVersionsChecker(3), new ComponentsChecker(4), new LabelsChecker(4), new FixVersionsChecker(3), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
         checkIssue(allIssues, "TDP-5", IssueType.FEATURE, Priority.HIGH, "Five", 1,
                 new ComponentsChecker(2), new AssigneeChecker(0));
         checkIssue(allIssues, "TDP-6", IssueType.FEATURE, Priority.HIGH, "Five", 1,
                 new LabelsChecker(2), new AssigneeChecker(0));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(5), new LabelsChecker(5), new FixVersionsChecker(4), new AssigneeChecker(1));
+                new AffectsVersionsChecker(4), new ComponentsChecker(5), new LabelsChecker(5), new FixVersionsChecker(4), new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0);
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4, 5, 6);
@@ -862,15 +886,16 @@ public class BoardManagerTest extends AbstractBoardTest {
         boardNode = getJson(3, new BoardAssigneeChecker("brian", "kabir"),
                 new BoardComponentsChecker("CC", "CE", "CF", "CG", "CI", "CN"),
                 new BoardLabelsChecker("LC", "LE", "LF", "LG", "LI", "LN"),
-                new BoardFixVersionsChecker("FC", "FE", "FF", "FG", "FI", "FN"));
+                new BoardFixVersionsChecker("FC", "FE", "FF", "FG", "FI", "FN"),
+                new BoardAffectsVersionsChecker("AC", "AE", "AG", "AI", "AN"));
 
         allIssues = getIssuesCheckingSize(boardNode, 10);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(1, 3), new LabelsChecker(1, 3), new FixVersionsChecker(1, 3));
+                new AffectsVersionsChecker(1, 2), new ComponentsChecker(1, 3), new LabelsChecker(1, 3), new FixVersionsChecker(1, 3));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2,
-                new ComponentsChecker(4), new LabelsChecker(4), new FixVersionsChecker(4), new AssigneeChecker(1));
+                new AffectsVersionsChecker(3), new ComponentsChecker(4), new LabelsChecker(4), new FixVersionsChecker(4), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
         checkIssue(allIssues, "TDP-5", IssueType.FEATURE, Priority.HIGH, "Five", 1,
                 new ComponentsChecker(2), new AssigneeChecker(0));
@@ -879,33 +904,71 @@ public class BoardManagerTest extends AbstractBoardTest {
         checkIssue(allIssues, "TDP-7", IssueType.FEATURE, Priority.HIGH, "Five", 1,
                 new FixVersionsChecker(2), new AssigneeChecker(0));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(5), new LabelsChecker(5), new FixVersionsChecker(5), new AssigneeChecker(1));
+                new AffectsVersionsChecker(4), new ComponentsChecker(5), new LabelsChecker(5), new FixVersionsChecker(5), new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0);
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4, 5, 6, 7);
         checkProjectRankedIssues(boardNode, "TBG", 1, 2, 3);
 
-        //Add an issue with a several new components, labels and fix versions
+        //Add an issue with a single new affects version
+        create = createEventBuilder("TDP-8", IssueType.FEATURE, Priority.HIGH, "Five")
+                .assignee("brian")
+                .affectsVersions("AF")
+                .state("TDP-B")
+                .buildAndRegister();
+        boardManager.handleEvent(create, nextRankedIssueUtil);
+        boardNode = getJson(4, new BoardAssigneeChecker("brian", "kabir"),
+                new BoardComponentsChecker("CC", "CE", "CF", "CG", "CI", "CN"),
+                new BoardLabelsChecker("LC", "LE", "LF", "LG", "LI", "LN"),
+                new BoardFixVersionsChecker("FC", "FE", "FF", "FG", "FI", "FN"),
+                new BoardAffectsVersionsChecker("AC", "AE", "AF", "AG", "AI", "AN"));
+
+        allIssues = getIssuesCheckingSize(boardNode, 11);
+        checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
+                new AffectsVersionsChecker(1, 3), new ComponentsChecker(1, 3), new LabelsChecker(1, 3), new FixVersionsChecker(1, 3));
+        checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1,
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2,
+                new AffectsVersionsChecker(4), new ComponentsChecker(4), new LabelsChecker(4), new FixVersionsChecker(4), new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
+        checkIssue(allIssues, "TDP-5", IssueType.FEATURE, Priority.HIGH, "Five", 1,
+                new ComponentsChecker(2), new AssigneeChecker(0));
+        checkIssue(allIssues, "TDP-6", IssueType.FEATURE, Priority.HIGH, "Five", 1,
+                new LabelsChecker(2), new AssigneeChecker(0));
+        checkIssue(allIssues, "TDP-7", IssueType.FEATURE, Priority.HIGH, "Five", 1,
+                new FixVersionsChecker(2), new AssigneeChecker(0));
+        checkIssue(allIssues, "TDP-8", IssueType.FEATURE, Priority.HIGH, "Five", 1,
+                new AffectsVersionsChecker(2), new AssigneeChecker(0));
+        checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
+                new AffectsVersionsChecker(5), new ComponentsChecker(5), new LabelsChecker(5), new FixVersionsChecker(5), new AssigneeChecker(1));
+        checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
+        checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0);
+        checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4, 5, 6, 7, 8);
+        checkProjectRankedIssues(boardNode, "TBG", 1, 2, 3);
+
+        //Add an issue with a several new affects versions, components, labels and fix versions
         create = createEventBuilder("TBG-4", IssueType.FEATURE, Priority.HIGH, "Four")
                 .assignee("brian")
+                .affectsVersions("AJ", "AK")
                 .components("CJ", "CK")
                 .labels("LJ", "LK")
                 .fixVersions("FJ", "FK")
                 .state("TBG-X")
                 .buildAndRegister();
         boardManager.handleEvent(create, nextRankedIssueUtil);
-        boardNode = getJson(4, new BoardAssigneeChecker("brian", "kabir"),
+        boardNode = getJson(5, new BoardAssigneeChecker("brian", "kabir"),
                 new BoardComponentsChecker("CC", "CE", "CF", "CG", "CI", "CJ", "CK", "CN"),
                 new BoardLabelsChecker("LC", "LE", "LF", "LG", "LI", "LJ", "LK", "LN"),
-                new BoardFixVersionsChecker("FC", "FE", "FF", "FG", "FI", "FJ", "FK", "FN"));
+                new BoardFixVersionsChecker("FC", "FE", "FF", "FG", "FI", "FJ", "FK", "FN"),
+                new BoardAffectsVersionsChecker("AC", "AE", "AF", "AG", "AI", "AJ", "AK", "AN"));
 
-        allIssues = getIssuesCheckingSize(boardNode, 11);
+        allIssues = getIssuesCheckingSize(boardNode, 12);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(1, 3), new LabelsChecker(1, 3), new FixVersionsChecker(1, 3));
+                new AffectsVersionsChecker(1, 3), new ComponentsChecker(1, 3), new LabelsChecker(1, 3), new FixVersionsChecker(1, 3));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2,
-                new ComponentsChecker(4), new LabelsChecker(4), new FixVersionsChecker(4), new AssigneeChecker(1));
+                new AffectsVersionsChecker(4), new ComponentsChecker(4), new LabelsChecker(4), new FixVersionsChecker(4), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
         checkIssue(allIssues, "TDP-5", IssueType.FEATURE, Priority.HIGH, "Five", 1,
                 new ComponentsChecker(2), new AssigneeChecker(0));
@@ -914,22 +977,22 @@ public class BoardManagerTest extends AbstractBoardTest {
         checkIssue(allIssues, "TDP-7", IssueType.FEATURE, Priority.HIGH, "Five", 1,
                 new FixVersionsChecker(2), new AssigneeChecker(0));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(7), new LabelsChecker(7), new FixVersionsChecker(7), new AssigneeChecker(1));
+                new AffectsVersionsChecker(7), new ComponentsChecker(7), new LabelsChecker(7), new FixVersionsChecker(7), new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0);
         checkIssue(allIssues, "TBG-4", IssueType.FEATURE, Priority.HIGH, "Four", 0,
-                new ComponentsChecker(5, 6), new LabelsChecker(5, 6), new FixVersionsChecker(5, 6), new AssigneeChecker(0));
+                new AffectsVersionsChecker(5, 6), new ComponentsChecker(5, 6), new LabelsChecker(5, 6), new FixVersionsChecker(5, 6), new AssigneeChecker(0));
 
-        checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4, 5, 6, 7);
+        checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4, 5, 6, 7, 8);
         checkProjectRankedIssues(boardNode, "TBG", 1, 2, 3, 4);
     }
 
     @Test
     public void testUpdateIssueNoNewUsersOrMultiSelectNameOnlyValues() throws Exception {
         issueRegistry.issueBuilder("TDP", "task", "highest", "One", "TDP-A")
-                .components("C1").labels("L1").fixVersions("F1").buildAndRegister();
+                .affectsVersions("A1").components("C1").labels("L1").fixVersions("F1").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "high", "Two", "TDP-B")
-                .assignee("kabir").components("C2").labels("L2").fixVersions("F2").buildAndRegister();
+                .assignee("kabir").affectsVersions("A2").components("C2").labels("L2").fixVersions("F2").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "low", "Three", "TDP-C")
                 .assignee("kabir").buildAndRegister();
         issueRegistry.issueBuilder("TDP", "task", "lowest", "Four", "TDP-D")
@@ -941,7 +1004,10 @@ public class BoardManagerTest extends AbstractBoardTest {
         issueRegistry.issueBuilder("TBG", "feature", "low", "Three", "TBG-X")
                 .buildAndRegister();
         getJson(0, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"),
+                new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"),
+                new BoardAffectsVersionsChecker("A1", "A2"));
 
 
         //Update everything in one issue in one go
@@ -950,6 +1016,7 @@ public class BoardManagerTest extends AbstractBoardTest {
                 .priority(Priority.HIGH)
                 .summary("Four-1")
                 .assignee("kabir")
+                .affectsVersions("A1")
                 .components("C1")
                 .labels("L1")
                 .fixVersions("F1")
@@ -957,17 +1024,18 @@ public class BoardManagerTest extends AbstractBoardTest {
                 .buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         ModelNode boardNode = getJson(1, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
 
 
         ModelNode allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-4", IssueType.FEATURE, Priority.HIGH, "Four-1", 1,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0);
@@ -986,10 +1054,11 @@ public class BoardManagerTest extends AbstractBoardTest {
                 .buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(2, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.HIGHEST, "One", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
 
         //priority
         update = updateEventBuilder("TDP-1")
@@ -997,10 +1066,11 @@ public class BoardManagerTest extends AbstractBoardTest {
                 .buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(3, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
 
         //summary
         update = updateEventBuilder("TDP-1")
@@ -1008,73 +1078,91 @@ public class BoardManagerTest extends AbstractBoardTest {
                 .buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(4, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
 
         //assign
         update = updateEventBuilder("TDP-1").assignee("brian").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(5, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(0));
 
         //No updated assignee, nor unassigned - and nothing else changed so the event is a noop and the view does not change
         update = updateEventBuilder("TDP-1").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(5, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(0));
 
         //Unassign
         update = updateEventBuilder("TDP-1").unassign().buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(6, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
 
         //Change state
         update = updateEventBuilder("TDP-1").state("TDP-D").rank().buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(7, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 3,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0));
 
         //Change component
         update = updateEventBuilder("TDP-1").components("C2").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(8, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 3,
-                new ComponentsChecker(1), new LabelsChecker(0), new FixVersionsChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(1), new LabelsChecker(0), new FixVersionsChecker(0));
 
         //Change label
         update = updateEventBuilder("TDP-1").labels("L2").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(9, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 3,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(0));
 
         //fix versions
         update = updateEventBuilder("TDP-1").fixVersions("F2").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(10, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 3,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1));
+                new AffectsVersionsChecker(0), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1));
+
+        // Affects version
+        update = updateEventBuilder("TDP-1").affectsVersions("A2").buildAndRegister();
+        boardManager.handleEvent(update, nextRankedIssueUtil);
+        boardNode = getJson(11, new BoardAssigneeChecker("brian", "kabir"),
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
+        allIssues = getIssuesCheckingSize(boardNode, 7);
+        checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 3,
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1));
 
         //Change in the other project
         update = updateEventBuilder("TBG-3")
@@ -1082,30 +1170,32 @@ public class BoardManagerTest extends AbstractBoardTest {
                 .priority(Priority.HIGHEST)
                 .summary("Three-1")
                 .assignee("kabir")
+                .affectsVersions("A2")
                 .components("C2")
                 .labels("L2")
                 .fixVersions("F2")
                 .state("TBG-Y")
                 .buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
-        boardNode = getJson(11, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+        boardNode = getJson(12, new BoardAssigneeChecker("brian", "kabir"),
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 7);
         checkIssue(allIssues, "TBG-3", IssueType.BUG, Priority.HIGHEST, "Three-1", 1,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
 
         //Check full issue table
         checkIssue(allIssues, "TDP-1", IssueType.FEATURE, Priority.LOW, "One-1", 3,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-4", IssueType.FEATURE, Priority.HIGH, "Four-1", 1,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TBG-3", IssueType.BUG, Priority.HIGHEST, "Three-1", 1,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
 
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4);
         checkProjectRankedIssues(boardNode, "TBG", 1, 2, 3);
@@ -1325,6 +1415,63 @@ public class BoardManagerTest extends AbstractBoardTest {
     }
 
     @Test
+    public void testUpdateIssueNewAffectsVersions() throws Exception {
+        issueRegistry.issueBuilder("TDP", "task", "highest", "One", "TDP-A")
+                .affectsVersions("D").buildAndRegister();
+        issueRegistry.issueBuilder("TDP", "task", "high", "Two", "TDP-B")
+                .assignee("kabir").affectsVersions("K").buildAndRegister();
+        issueRegistry.issueBuilder("TDP", "task", "low", "Three", "TDP-C")
+                .assignee("kabir").buildAndRegister();
+        issueRegistry.issueBuilder("TDP", "feature", "lowest", "Four", "TDP-D")
+                .assignee("brian").buildAndRegister();
+        issueRegistry.issueBuilder("TBG", "task", "highest", "One", "TBG-X")
+                .assignee("kabir").buildAndRegister();
+        issueRegistry.issueBuilder("TBG", "bug", "high", "Two", "TBG-Y")
+                .assignee("kabir").buildAndRegister();
+        issueRegistry.issueBuilder("TBG", "feature", "low", "Three", "TBG-X")
+                .buildAndRegister();
+        getJson(0, new BoardAssigneeChecker("brian", "kabir"),
+                new BoardAffectsVersionsChecker("D", "K"));
+
+        OverbaardIssueEvent update = updateEventBuilder("TDP-1").affectsVersions("E", "F").buildAndRegister();
+        boardManager.handleEvent(update, nextRankedIssueUtil);
+        getJson(1, new BoardAssigneeChecker("brian", "kabir"),
+                new BoardAffectsVersionsChecker("D", "E", "F", "K"));
+
+        update = updateEventBuilder("TBG-3").affectsVersions("L").buildAndRegister();
+        boardManager.handleEvent(update, nextRankedIssueUtil);
+        ModelNode boardNode = getJson(2, new BoardAssigneeChecker("brian", "kabir"),
+                new BoardAffectsVersionsChecker("D", "E", "F", "K", "L"));
+
+        ModelNode allIssues = getIssuesCheckingSize(boardNode, 7);
+        checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0, new AffectsVersionsChecker(1, 2));
+        checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AffectsVersionsChecker(3), new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2, new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-4", IssueType.FEATURE, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
+        checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0, new AssigneeChecker(1));
+        checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
+        checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0, new AffectsVersionsChecker(4));
+
+        //Clear the components from an issue
+        update = updateEventBuilder("TDP-1").clearAffectsVersions().buildAndRegister();
+        boardManager.handleEvent(update, nextRankedIssueUtil);
+        boardNode = getJson(3, new BoardAssigneeChecker("brian", "kabir"),
+                new BoardAffectsVersionsChecker("D", "E", "F", "K", "L"));
+
+        allIssues = getIssuesCheckingSize(boardNode, 7);
+        checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGHEST, "One", 0);
+        checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AffectsVersionsChecker(3), new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.LOW, "Three", 2, new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-4", IssueType.FEATURE, Priority.LOWEST, "Four", 3, new AssigneeChecker(0));
+        checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGHEST, "One", 0, new AssigneeChecker(1));
+        checkIssue(allIssues, "TBG-2", IssueType.BUG, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
+        checkIssue(allIssues, "TBG-3", IssueType.FEATURE, Priority.LOW, "Three", 0, new AffectsVersionsChecker(4));
+
+        checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4);
+        checkProjectRankedIssues(boardNode, "TBG", 1, 2, 3);
+    }
+
+    @Test
     public void testMissingState() throws SearchException {
         issueRegistry.issueBuilder("TDP", "task", "highest", "One", "BAD")
                 .buildAndRegister();
@@ -1526,7 +1673,7 @@ public class BoardManagerTest extends AbstractBoardTest {
         issueRegistry.issueBuilder("TDP", "task", "high", "One", "TDP-A")
                 .assignee("kabir").components("C1").labels("L1").buildAndRegister();      //1
         issueRegistry.issueBuilder("TDP", "task", "high", "Two", "TDP-B")
-                .assignee("kabir").components("C2").buildAndRegister();     //2
+                .assignee("kabir").affectsVersions("A1").components("C2").buildAndRegister();     //2
         issueRegistry.issueBuilder("TDP", "task", "high", "Three", "TDP-C")
                 .assignee("brian").buildAndRegister();                      //3
         issueRegistry.issueBuilder("TDP", "task", "high", "Four", "TDP-D")
@@ -1539,7 +1686,8 @@ public class BoardManagerTest extends AbstractBoardTest {
         //Although not all the assignees and components, labels and fixVersions are used in the non-blacklist part of the board,
         //include them anyway
         ModelNode boardNode = getJson(0, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2", "C3"), new BoardLabelsChecker("L1"), new BoardFixVersionsChecker("F1"));
+                new BoardComponentsChecker("C1", "C2", "C3"), new BoardLabelsChecker("L1"),
+                new BoardFixVersionsChecker("F1"), new BoardAffectsVersionsChecker("A1"));
         checkNameAndColour(boardNode, "priorities", "highest", "high", "low", "lowest");
         checkNameAndColour(boardNode, "issue-types", "task", "bug", "feature");
 
@@ -1554,14 +1702,15 @@ public class BoardManagerTest extends AbstractBoardTest {
 
         //Now check with the backlog
         boardNode = getJson(0, true, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1", "C2", "C3"), new BoardLabelsChecker("L1"), new BoardFixVersionsChecker("F1"));
+                new BoardComponentsChecker("C1", "C2", "C3"), new BoardLabelsChecker("L1"),
+                new BoardFixVersionsChecker("F1"), new BoardAffectsVersionsChecker("A1"));
         checkNameAndColour(boardNode, "priorities", "highest", "high", "low", "lowest");
         checkNameAndColour(boardNode, "issue-types", "task", "bug", "feature");
 
         allIssues = getIssuesCheckingSize(boardNode, 6);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGH, "One", 0,
                 new ComponentsChecker(0), new LabelsChecker(0), new AssigneeChecker(1));
-        checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new ComponentsChecker(1), new AssigneeChecker(1));
+        checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AffectsVersionsChecker(0), new ComponentsChecker(1), new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.HIGH, "Three", 2, new AssigneeChecker(0));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.HIGH, "Four", 3, new AssigneeChecker(0));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGH, "One", 0,
@@ -1585,11 +1734,11 @@ public class BoardManagerTest extends AbstractBoardTest {
         issueRegistry.issueBuilder("TDP", "task", "high", "Three", "TDP-C")
                 .assignee("kabir").buildAndRegister();      //3
         issueRegistry.issueBuilder("TDP", "task", "high", "Four", "TDP-D")
-                .assignee("brian").components("C1").labels("L1").fixVersions("F1").buildAndRegister(); //4
+                .assignee("brian").affectsVersions("A1").components("C1").labels("L1").fixVersions("F1").buildAndRegister(); //4
         issueRegistry.issueBuilder("TBG", "task", "high", "One", "TBG-X")
                 .assignee("kabir").buildAndRegister();                  //1
         issueRegistry.issueBuilder("TBG", "task", "high", "Two", "TBG-Y")
-                .assignee("jason").components("C2").labels("L2").fixVersions("F2").buildAndRegister(); //2
+                .assignee("jason").affectsVersions("A2").components("C2").labels("L2").fixVersions("F2").buildAndRegister(); //2
 
         //Although the assignees and components used in the done part of the board should not be included, and neither
         //include them anyway
@@ -1626,13 +1775,14 @@ public class BoardManagerTest extends AbstractBoardTest {
         boardManager.handleEvent(update, nextRankedIssueUtil);
         //view id is 0 here because board has been recreated (due to moving issue out of 'done')
         boardNode = getJson(0, new BoardAssigneeChecker("brian", "kabir"),
-                new BoardComponentsChecker("C1"), new BoardLabelsChecker("L1"), new BoardFixVersionsChecker("F1"));
+                new BoardComponentsChecker("C1"), new BoardLabelsChecker("L1"),
+                new BoardFixVersionsChecker("F1"), new BoardAffectsVersionsChecker("A1"));
         allIssues = getIssuesCheckingSize(boardNode, 5);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGH, "One", 0, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.HIGH, "Three", 0, new AssigneeChecker(1));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.HIGH, "Four", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(0));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGH, "One", 0, new AssigneeChecker(1));
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4);
         checkProjectRankedIssues(boardNode, "TBG", 1);
@@ -1642,16 +1792,17 @@ public class BoardManagerTest extends AbstractBoardTest {
         boardManager.handleEvent(update, nextRankedIssueUtil);
         //view id is 0 here because board has been recreated (due to moving issue out of 'done')
         boardNode = getJson(0, new BoardAssigneeChecker("brian", "jason", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 6);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGH, "One", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.HIGH, "Three", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-4", IssueType.TASK, Priority.HIGH, "Four", 0,
-                new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(0));
+                new AffectsVersionsChecker(0), new ComponentsChecker(0), new LabelsChecker(0), new FixVersionsChecker(0), new AssigneeChecker(0));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGH, "One", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TBG-2", IssueType.TASK, Priority.HIGH, "Two", 0,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3, 4);
         checkProjectRankedIssues(boardNode, "TBG", 1, 2);
 
@@ -1659,27 +1810,29 @@ public class BoardManagerTest extends AbstractBoardTest {
         update = updateEventBuilder("TDP-4").state("TDP-C").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(1, new BoardAssigneeChecker("brian", "jason", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 5);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGH, "One", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.HIGH, "Three", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TBG-1", IssueType.TASK, Priority.HIGH, "One", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TBG-2", IssueType.TASK, Priority.HIGH, "Two", 0,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3);
         checkProjectRankedIssues(boardNode, "TBG", 1, 2);
 
         update = updateEventBuilder("TBG-1").state("TBG-Y").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(2, new BoardAssigneeChecker("brian", "jason", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 4);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGH, "One", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.HIGH, "Three", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TBG-2", IssueType.TASK, Priority.HIGH, "Two", 0,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3);
         checkProjectRankedIssues(boardNode, "TBG", 2);
 
@@ -1687,13 +1840,14 @@ public class BoardManagerTest extends AbstractBoardTest {
         update = updateEventBuilder("TDP-4").state("TDP-D").buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(2, new BoardAssigneeChecker("brian", "jason", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 4);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGH, "One", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.HIGH, "Three", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TBG-2", IssueType.TASK, Priority.HIGH, "Two", 0,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3);
         checkProjectRankedIssues(boardNode, "TBG", 2);
 
@@ -1701,6 +1855,7 @@ public class BoardManagerTest extends AbstractBoardTest {
         update = updateEventBuilder("TDP-4")
                 .issueType(IssueType.BUG)
                 .priority(Priority.LOW)
+                .affectsVersions("A3")
                 .components("C3")
                 .labels("L3")
                 .fixVersions("F3")
@@ -1709,13 +1864,14 @@ public class BoardManagerTest extends AbstractBoardTest {
                 .buildAndRegister();
         boardManager.handleEvent(update, nextRankedIssueUtil);
         boardNode = getJson(2, new BoardAssigneeChecker("brian", "jason", "kabir"),
-                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"), new BoardFixVersionsChecker("F1", "F2"));
+                new BoardComponentsChecker("C1", "C2"), new BoardLabelsChecker("L1", "L2"),
+                new BoardFixVersionsChecker("F1", "F2"), new BoardAffectsVersionsChecker("A1", "A2"));
         allIssues = getIssuesCheckingSize(boardNode, 4);
         checkIssue(allIssues, "TDP-1", IssueType.TASK, Priority.HIGH, "One", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-2", IssueType.TASK, Priority.HIGH, "Two", 1, new AssigneeChecker(2));
         checkIssue(allIssues, "TDP-3", IssueType.TASK, Priority.HIGH, "Three", 0, new AssigneeChecker(2));
         checkIssue(allIssues, "TBG-2", IssueType.TASK, Priority.HIGH, "Two", 0,
-                new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
+                new AffectsVersionsChecker(1), new ComponentsChecker(1), new LabelsChecker(1), new FixVersionsChecker(1), new AssigneeChecker(1));
         checkProjectRankedIssues(boardNode, "TDP", 1, 2, 3);
         checkProjectRankedIssues(boardNode, "TBG", 2);
     }
@@ -3516,6 +3672,7 @@ public class BoardManagerTest extends AbstractBoardTest {
         checkerMap.put(BoardComponentsChecker.class, BoardComponentsChecker.NONE);
         checkerMap.put(BoardLabelsChecker.class, BoardLabelsChecker.NONE);
         checkerMap.put(BoardFixVersionsChecker.class, BoardFixVersionsChecker.NONE);
+        checkerMap.put(BoardAffectsVersionsChecker.class, BoardAffectsVersionsChecker.NONE);
         checkerMap.put(BoardTesterChecker.class, BoardTesterChecker.NONE);
         checkerMap.put(BoardDocumenterChecker.class, BoardDocumenterChecker.NONE);
         checkerMap.put(BoardTestedByChecker.class, BoardTestedByChecker.NONE);
@@ -3608,6 +3765,7 @@ public class BoardManagerTest extends AbstractBoardTest {
         checkerMap.put(ComponentsChecker.class, ComponentsChecker.NONE);
         checkerMap.put(LabelsChecker.class, LabelsChecker.NONE);
         checkerMap.put(FixVersionsChecker.class, FixVersionsChecker.NONE);
+        checkerMap.put(AffectsVersionsChecker.class, AffectsVersionsChecker.NONE);
         checkerMap.put(TesterChecker.class, TesterChecker.NONE);
         checkerMap.put(DocumenterChecker.class, DocumenterChecker.NONE);
         checkerMap.put(TestedByChecker.class, TestedByChecker.NONE);
@@ -3763,12 +3921,12 @@ public class BoardManagerTest extends AbstractBoardTest {
         @Override
         public void check(ModelNode issue) {
             if (expected == null) {
-                Assert.assertFalse(issue.hasDefined(name));
+                Assert.assertFalse("Failed in " + this.getClass().getName(), issue.hasDefined(name));
             } else {
                 List<ModelNode> componentsNodes = issue.get(name).asList();
                 Assert.assertEquals(expected.length, componentsNodes.size());
                 for (int i = 0 ; i < expected.length ; i++) {
-                    Assert.assertEquals(expected[i], componentsNodes.get(i).asInt());
+                    Assert.assertEquals("Failed in " + this.getClass().getName(), expected[i], componentsNodes.get(i).asInt());
                 }
             }
         }
@@ -3795,6 +3953,14 @@ public class BoardManagerTest extends AbstractBoardTest {
 
         FixVersionsChecker(int...expected) {
             super(FIX_VERSIONS, expected);
+        }
+    }
+
+    private static class AffectsVersionsChecker extends MultiSelectNameOnlyChecker {
+        static final AffectsVersionsChecker NONE = new AffectsVersionsChecker(null);
+
+        AffectsVersionsChecker(int...expected) {
+            super(AFFECTS_VERSIONS, expected);
         }
     }
 
@@ -3871,6 +4037,14 @@ public class BoardManagerTest extends AbstractBoardTest {
 
         BoardFixVersionsChecker(String... fixVersionNames) {
             super(FIX_VERSIONS, fixVersionNames);
+        }
+    }
+
+    private static class BoardAffectsVersionsChecker extends BoardMultiSelectNameOnlyValueChecker {
+        static final BoardAffectsVersionsChecker NONE = new BoardAffectsVersionsChecker();
+
+        BoardAffectsVersionsChecker(String... fixVersionNames) {
+            super(AFFECTS_VERSIONS, fixVersionNames);
         }
     }
 

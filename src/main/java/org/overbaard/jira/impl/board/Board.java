@@ -39,6 +39,7 @@ import org.overbaard.jira.api.ProjectCustomFieldOptionsLoader;
 import org.overbaard.jira.impl.Constants;
 import org.overbaard.jira.impl.JiraInjectables;
 import org.overbaard.jira.impl.OverbaardIssueEvent;
+import org.overbaard.jira.impl.board.MultiSelectNameOnlyValue.AffectsVersion;
 import org.overbaard.jira.impl.board.MultiSelectNameOnlyValue.Component;
 import org.overbaard.jira.impl.board.MultiSelectNameOnlyValue.FixVersion;
 import org.overbaard.jira.impl.board.MultiSelectNameOnlyValue.Label;
@@ -72,6 +73,7 @@ public class Board {
     private final IndexedMap<String, Component> sortedComponents;
     private final IndexedMap<String, Label> sortedLabels;
     private final IndexedMap<String, FixVersion> sortedFixVersions;
+    private final IndexedMap<String, AffectsVersion> sortedAffectsVersions;
     private final Map<String, Issue> allIssues;
     private final Map<String, BoardProject> projects;
     private final Map<String, SortedCustomFieldValues> sortedCustomFieldValues;
@@ -79,14 +81,14 @@ public class Board {
     private final Blacklist blacklist;
 
     private Board(Board old, BoardConfig boardConfig,
-                    IndexedMap<String, Assignee> sortedAssignees,
-                    IndexedMap<String, Component> sortedComponents,
-                    IndexedMap<String, Label> sortedLabels,
-                    IndexedMap<String, FixVersion> sortedFixVersions,
-                    Map<String, Issue> allIssues,
-                    Map<String, BoardProject> projects,
-                    Map<String, SortedCustomFieldValues> sortedCustomFieldValues,
-                    Blacklist blacklist) {
+                  IndexedMap<String, Assignee> sortedAssignees,
+                  IndexedMap<String, Component> sortedComponents,
+                  IndexedMap<String, Label> sortedLabels,
+                  IndexedMap<String, FixVersion> sortedFixVersions,
+                  IndexedMap<String, AffectsVersion> sortedAffectsVersions, Map<String, Issue> allIssues,
+                  Map<String, BoardProject> projects,
+                  Map<String, SortedCustomFieldValues> sortedCustomFieldValues,
+                  Blacklist blacklist) {
         this.currentView = old == null ? 0 : old.currentView + 1;
         this.boardConfig = boardConfig;
 
@@ -95,6 +97,7 @@ public class Board {
         this.sortedComponents = sortedComponents;
         this.sortedLabels = sortedLabels;
         this.sortedFixVersions = sortedFixVersions;
+        this.sortedAffectsVersions = sortedAffectsVersions;
 
         this.allIssues = allIssues;
         this.projects = projects;
@@ -136,6 +139,10 @@ public class Board {
         if (sortedFixVersions.size() > 0) {
             ModelNode fixVersionsNode = outputNode.get(Constants.FIX_VERSIONS);
             sortedFixVersions.values().forEach(fixVersion -> fixVersion.serialize(fixVersionsNode));
+        }
+        if (sortedAffectsVersions.size() > 0) {
+            ModelNode affectsVersionsNode = outputNode.get(Constants.AFFECTS_VERSIONS);
+            sortedAffectsVersions.values().forEach(affectsVersion -> affectsVersion.serialize(affectsVersionsNode));
         }
         if (sortedCustomFieldValues.size() > 0) {
             ModelNode customNode = outputNode.get(Constants.CUSTOM);
@@ -212,6 +219,10 @@ public class Board {
 
     public int getFixVersionIndex(FixVersion fixVersion) {
         return sortedFixVersions.getIndex(fixVersion.getName());
+    }
+
+    public int getAffectsVersionIndex(AffectsVersion affectsVersion) {
+        return sortedAffectsVersions.getIndex(affectsVersion.getName());
     }
 
     public int getCustomFieldIndex(CustomFieldValue customFieldValue) {
@@ -301,6 +312,8 @@ public class Board {
 
         abstract Set<FixVersion> getFixVersions(Collection<Version> fixVersions);
 
+        abstract Set<AffectsVersion> getAffectsVersions(Collection<Version> affectsVersions);
+
         public List<String> getStateNames() {
             return boardConfig.getStateNames();
         }
@@ -342,6 +355,7 @@ public class Board {
         private final Map<String, Component> components = new HashMap<>();
         private final Map<String, Label> labels = new HashMap<>();
         private final Map<String, FixVersion> fixVersions = new HashMap<>();
+        private final Map<String, AffectsVersion> affectsVersions = new HashMap<>();
         private final Map<String, Issue> allIssues = new HashMap<>();
         private final Map<String, BoardProject.Builder> projects = new HashMap<>();
         private final Blacklist.Builder blacklist = new Blacklist.Builder();
@@ -404,6 +418,13 @@ public class Board {
             return getIssueMultiSelectNameValues(fixVersions, jiraFixVersions,
                     jiraFixVersion -> jiraFixVersion.getName(),
                     name -> new FixVersion(name));
+        }
+
+        @Override
+        Set<AffectsVersion> getAffectsVersions(Collection<Version> jiraAffectsVersions) {
+            return getIssueMultiSelectNameValues(affectsVersions, jiraAffectsVersions,
+                    jiraAffectsVersion -> jiraAffectsVersion.getName(),
+                    name -> new AffectsVersion(name));
         }
 
         private <T, R extends MultiSelectNameOnlyValue> Set<R> getIssueMultiSelectNameValues (
@@ -481,6 +502,7 @@ public class Board {
                     new IndexedMap<>(sortMultiSelectNameOnlyValueMap(components)),
                     new IndexedMap<>(sortMultiSelectNameOnlyValueMap(labels)),
                     new IndexedMap<>(sortMultiSelectNameOnlyValueMap(fixVersions)),
+                    new IndexedMap<>(sortMultiSelectNameOnlyValueMap(affectsVersions)),
                     Collections.unmodifiableMap(allIssues),
                     Collections.unmodifiableMap(projects),
                     Collections.unmodifiableMap(sortedCustomFieldValues),
@@ -506,6 +528,8 @@ public class Board {
         private Map<String, Label> labelsCopy;
         //Will only be populated if new fixVersions are brought in
         private Map<String, FixVersion> fixVersionsCopy;
+        //Will only be populated if new affectsVersions are brought in
+        private Map<String, AffectsVersion> affectsVersionsCopy;
 
         Map<String, Issue> allIssuesCopy;
 
@@ -513,6 +537,7 @@ public class Board {
         private Set<Component> newComponents;
         private Set<Label> newLabels;
         private Set<FixVersion> newFixVersions;
+        private Set<AffectsVersion> newAffectsVersions;
         private final Map<Long, SortedCustomFieldValues.Updater> customFieldUpdaters = new HashMap();
 
         Updater(JiraInjectables jiraInjectables, Board board, ApplicationUser boardOwner, BoardChangeRegistry changeRegistry) {
@@ -576,6 +601,7 @@ public class Board {
                     board.sortedComponents,
                     board.sortedLabels,
                     board.sortedFixVersions,
+                    board.sortedAffectsVersions,
                     Collections.unmodifiableMap(allIssuesCopy),
                     projectsCopy,
                     SortedCustomFieldValues.Updater.merge(customFieldUpdaters, board.sortedCustomFieldValues),
@@ -653,6 +679,7 @@ public class Board {
             final Set<Component> issueComponents = getOrCreateIssueComponents(evtDetail);
             final Set<Label> issueLabels = getOrCreateIssueLabels(evtDetail);
             final Set<FixVersion> issueFixVersions = getOrCreateIssueFixVersions(evtDetail);
+            final Set<AffectsVersion> issueAffectsVersions = getOrCreateIssueAffectsVersions(evtDetail);
 
             final BoardProject.Updater projectUpdater = project.updater(jiraInjectables, nextRankedIssueUtil, this, boardOwner);
             final Map<String, CustomFieldValue> customFieldValues
@@ -668,7 +695,7 @@ public class Board {
                         CustomFieldValue.loadParallelTaskGroupValues(projectUpdater, evtDetail.getCustomFieldValues(), null, evtDetail.getIssueType());
                 newIssue = projectUpdater.createIssue(event.getIssueKey(), evtDetail.getIssueType(),
                         evtDetail.getPriority(), evtDetail.getSummary(), issueAssignee,
-                        issueComponents, issueLabels, issueFixVersions,
+                        issueComponents, issueLabels, issueFixVersions, issueAffectsVersions,
                         evtDetail.getState(), customFieldValues, parallelTaskGroupValues);
             } else {
                 existingIssue = board.allIssues.get(event.getIssueKey());
@@ -693,7 +720,7 @@ public class Board {
                     parallelTaskGroupValues = CustomFieldValue.loadParallelTaskGroupValues(projectUpdater, evtDetail.getCustomFieldValues(), existingIssue, evtDetail.getIssueType());
                     newIssue = projectUpdater.updateIssue(existingIssue, evtDetail.getIssueType(),
                             evtDetail.getPriority(), evtDetail.getSummary(), issueAssignee,
-                            issueComponents, issueLabels, issueFixVersions,
+                            issueComponents, issueLabels, issueFixVersions, issueAffectsVersions,
                             evtDetail.isReranked(), evtDetail.getState(), customFieldValues, parallelTaskGroupValues);
                 }
             }
@@ -719,6 +746,7 @@ public class Board {
                         componentsCopy == null ? board.sortedComponents : new IndexedMap<>(sortMultiSelectNameOnlyValueMap(componentsCopy)),
                         labelsCopy == null ? board.sortedLabels : new IndexedMap<>(sortMultiSelectNameOnlyValueMap(labelsCopy)),
                         fixVersionsCopy == null ? board.sortedFixVersions : new IndexedMap<>(sortMultiSelectNameOnlyValueMap(fixVersionsCopy)),
+                        affectsVersionsCopy == null ? board.sortedAffectsVersions : new IndexedMap<>(sortMultiSelectNameOnlyValueMap(affectsVersionsCopy)),
                         allIssuesCopy,
                         Collections.unmodifiableMap(projectsCopy),
                         SortedCustomFieldValues.Updater.merge(customFieldUpdaters, board.sortedCustomFieldValues),
@@ -755,6 +783,9 @@ public class Board {
                     }
                     if (newFixVersions != null) {
                         changeBuilder.addNewFixVersions(newFixVersions);
+                    }
+                    if (newAffectsVersions != null) {
+                        changeBuilder.addNewAffectsVersions(newAffectsVersions);
                     }
                     if (blacklist.isUpdated()) {
                         changeBuilder.addBlacklist(blacklist.getAddedState(), blacklist.getAddedIssueType(),
@@ -805,6 +836,11 @@ public class Board {
         @Override
         Set<FixVersion> getFixVersions(Collection<Version> fixVersions) {
             return getOrCreateIssueFixVersions(fixVersions);
+        }
+
+        @Override
+        Set<AffectsVersion> getAffectsVersions(Collection<Version> affectsVersions) {
+            return getOrCreateIssueAffectsVersions(affectsVersions);
         }
 
         @Override
@@ -945,6 +981,31 @@ public class Board {
                         return newFixVersions;
                     });
         }
+
+        private Set<AffectsVersion> getOrCreateIssueAffectsVersions(OverbaardIssueEvent.Detail evtDetail) {
+            return getOrCreateIssueAffectsVersions(evtDetail.getAffectsVersions());
+        }
+
+        private Set<AffectsVersion> getOrCreateIssueAffectsVersions(Collection<com.atlassian.jira.project.version.Version> evtAffectsVersions) {
+            return getOrCreateIssueMultiSelectNameValues(
+                    evtAffectsVersions,
+                    com.atlassian.jira.project.version.Version::getName,
+                    name -> new AffectsVersion(name),
+                    () -> affectsVersionsCopy == null ? board.sortedAffectsVersions.map() : affectsVersionsCopy,
+                    () -> {
+                        if (affectsVersionsCopy == null) {
+                            affectsVersionsCopy = new HashMap<String, AffectsVersion>(board.sortedAffectsVersions.map());
+                        }
+                        return affectsVersionsCopy;
+                    },
+                    () -> {
+                        if (newAffectsVersions == null) {
+                            newAffectsVersions = new HashSet<AffectsVersion>();
+                        }
+                        return newAffectsVersions;
+                    });
+        }
+
 
         private <T, R extends MultiSelectNameOnlyValue> Set<R> getOrCreateIssueMultiSelectNameValues(
                 Collection<T> jiraEventValues,

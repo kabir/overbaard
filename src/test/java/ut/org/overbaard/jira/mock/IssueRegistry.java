@@ -75,7 +75,7 @@ public class IssueRegistry implements NextRankedIssueUtil {
 
     public void updateIssue(String issueKey, String issueTypeName, String priorityName,
                             String summary, String assignee, Set<ProjectComponent> components, Set<Label> labels, Set<Version> fixVersions,
-                            String state) {
+                            Set<Version> affectsVersions, String state) {
         Map<String, MockIssue> issues = issuesByProject.get(getProjectCode(issueKey));
         Assert.assertNotNull(issues);
         Issue issue = issues.get(issueKey);
@@ -85,29 +85,38 @@ public class IssueRegistry implements NextRankedIssueUtil {
         Priority priority = priorityName == null ? issue.getPriorityObject() : MockPriority.create(priorityName);
         String summ = summary == null ? issue.getSummary() : summary;
         ApplicationUser assigneeUser = assignee == null ? issue.getAssignee() : userManager.getUserByKey(assignee);
+
         Set<ProjectComponent> comps;
         if (components != null) {
             comps = components;
         } else {
             comps = issue.getComponentObjects() == null ? null : new HashSet<>(issue.getComponentObjects());
         }
+
         Set<Label> labelz;
         if (labels != null) {
             labelz = labels;
         } else {
             labelz = issue.getLabels() == null ? null : new HashSet<>(issue.getLabels());
         }
+
         Set<Version> fixVersionz;
         if (fixVersions != null) {
             fixVersionz = fixVersions;
         } else {
             fixVersionz = issue.getFixVersions() == null ? null : new HashSet<>(issue.getFixVersions());
         }
+
+        Set<Version> affectsVersionz;
+        if (affectsVersions != null) {
+            affectsVersionz = affectsVersions;
+        } else {
+            affectsVersionz = issue.getAffectedVersions() == null ? null : new HashSet<>(issue.getAffectedVersions());
+        }
         Status status = state == null ? issue.getStatusObject() : MockStatus.create(state);
 
-
         MockIssue newIssue = new MockIssue(issueKey, issueType, priority, summ,
-                assigneeUser, comps, labelz, fixVersionz, status);
+                assigneeUser, comps, labelz, fixVersionz, affectsVersionz, status);
         issues.put(issueKey, newIssue);
     }
 
@@ -219,6 +228,7 @@ public class IssueRegistry implements NextRankedIssueUtil {
         private Set<ProjectComponent> components;
         private Set<Label> labels;
         private Set<Version> fixVersions;
+        private Set<Version> affectsVersions;
         private String parentKey;
 
         private CreateIssueBuilder(String projectCode, String issueType, String priority, String summary, String state) {
@@ -275,6 +285,16 @@ public class IssueRegistry implements NextRankedIssueUtil {
             return this;
         }
 
+        public CreateIssueBuilder affectsVersions(String...affectsVersions) {
+            this.affectsVersions = MockVersion.createVersions(affectsVersions);
+            return this;
+        }
+
+        public CreateIssueBuilder affectsVersions(Set<Version> affectsVersions) {
+            this.affectsVersions = affectsVersions;
+            return this;
+        }
+
         public CreateIssueBuilder parentKey(String parentKey) {
             this.parentKey = parentKey;
             return this;
@@ -284,7 +304,8 @@ public class IssueRegistry implements NextRankedIssueUtil {
             Map<String, MockIssue> issues = issuesByProject.computeIfAbsent(projectCode, x -> new LinkedHashMap<>());
             String issueKey = projectCode + "-" + (issues.size() + 1);
             MockIssue issue =
-                    new MockIssue(issueKey, issueType, priority, summary, assignee, components, labels, fixVersions, state);
+                    new MockIssue(issueKey, issueType, priority, summary, assignee, components,
+                            labels, fixVersions, affectsVersions, state);
             issues.put(issueKey, issue);
             return issue;
         }
