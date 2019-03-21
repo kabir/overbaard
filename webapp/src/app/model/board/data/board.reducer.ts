@@ -30,6 +30,8 @@ import {manualSwimlaneReducer, ManualSwimlanesActions} from './manual-swimlane/m
 import {initialManualSwimlaneState, ManualSwimlaneState} from './manual-swimlane/manual-swimlane.model';
 import {EpicActions, epicMetaReducer} from './epic/epic.reducer';
 import {EpicState, initialEpicState} from './epic/epic.model';
+import {AffectsVersionActions, affectsVersionMetaReducer} from './affects-version/affects-version.reducer';
+import {AffectsVersionState, initialAffectsVersionState} from './affects-version/affects-version.model';
 
 
 const metaReducers = {
@@ -41,6 +43,7 @@ const metaReducers = {
   components: componentMetaReducer,
   labels: labelMetaReducer,
   fixVersions: fixVersionMetaReducer,
+  affectsVersions: affectsVersionMetaReducer,
   customFields: customFieldMetaReducer,
   manualSwimlanes: manualSwimlaneReducer,
   projects: projectMetaReducer,
@@ -130,6 +133,10 @@ export function boardReducer(state: BoardState = initialBoardState, action: Acti
       const fixVersionState: FixVersionState = input['fix-versions'] ?
         metaReducers.fixVersions(state.fixVersions, FixVersionActions.createDeserializeFixVersions(input['fix-versions']))
         : initialFixVersionState;
+      const affectVersionState: AffectsVersionState = input['affects-versions'] ?
+        metaReducers.affectsVersions(
+          state.affectsVersions, AffectsVersionActions.createDeserializeAffectsVersions(input['affects-versions']))
+        : initialAffectsVersionState;
       const customFieldState: CustomFieldState = input['custom'] ?
         metaReducers.customFields(state.customFields, CustomFieldActions.createDeserializeCustomFields(input['custom']))
         : initialCustomFieldState;
@@ -152,6 +159,7 @@ export function boardReducer(state: BoardState = initialBoardState, action: Acti
         .setComponents(componentState.components)
         .setLabels(labelState.labels)
         .setFixVersions(fixVersionState.versions)
+        .setAffectsVersions(affectVersionState.versions)
         .setCustomFields(customFieldState.fields)
         .setBoardProjects(projectState.boardProjects)
         .setLinkedProjects(projectState.linkedProjects)
@@ -174,6 +182,7 @@ export function boardReducer(state: BoardState = initialBoardState, action: Acti
         mutable.epics = epicState;
         mutable.components = componentState;
         mutable.fixVersions = fixVersionState;
+        mutable.affectsVersions = affectVersionState;
         mutable.labels = labelState;
         mutable.customFields = customFieldState;
         mutable.manualSwimlanes = manualSwimlaneState;
@@ -199,6 +208,9 @@ export function boardReducer(state: BoardState = initialBoardState, action: Acti
       const fixVersionState: FixVersionState = input['fix-versions'] ?
         metaReducers.fixVersions(state.fixVersions, FixVersionActions.createAddFixVersions(input['fix-versions']))
         : state.fixVersions;
+      const affectsVersionState: AffectsVersionState = input['affects-versions'] ?
+        metaReducers.affectsVersions(state.affectsVersions, AffectsVersionActions.createAddAffectsVersions(input['affects-versions']))
+        : state.affectsVersions;
       const customFieldState: CustomFieldState = input['custom'] ?
         metaReducers.customFields(state.customFields, CustomFieldActions.createAddCustomFields(input['custom']))
         : state.customFields;
@@ -216,6 +228,7 @@ export function boardReducer(state: BoardState = initialBoardState, action: Acti
         .setComponents(componentState.components)
         .setLabels(labelState.labels)
         .setFixVersions(fixVersionState.versions)
+        .setAffectsVersions(affectsVersionState.versions)
         .setCustomFields(customFieldState.fields)
         .setBoardProjects(state.projects.boardProjects)
         .setLinkedProjects(state.projects.linkedProjects)
@@ -234,6 +247,7 @@ export function boardReducer(state: BoardState = initialBoardState, action: Acti
         mutable.assignees = assigneeState;
         mutable.components = componentState;
         mutable.fixVersions = fixVersionState;
+        mutable.affectsVersions = affectsVersionState;
         mutable.labels = labelState;
         mutable.customFields = customFieldState;
         mutable.issues = issueState;

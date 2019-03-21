@@ -18,6 +18,7 @@ export interface BoardIssue extends Issue {
   components: OrderedSet<string>;
   labels: OrderedSet<string>;
   fixVersions: OrderedSet<string>;
+  affectsVersions: OrderedSet<string>;
   customFields: Map<string, CustomField>;
   parallelTasks: List<List<ParallelTask>>;
   selectedParallelTasks: List<List<number>>;

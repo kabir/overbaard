@@ -14,6 +14,7 @@ import {makeTypedFactory, TypedRecord} from 'typed-immutable-record';
 import {BoardState} from './board';
 import {initialManualSwimlaneState} from './manual-swimlane/manual-swimlane.model';
 import {initialEpicState} from './epic/epic.model';
+import {initialAffectsVersionState} from './affects-version/affects-version.model';
 
 const DEFAULT_STATE: BoardState = {
   viewId: -1,
@@ -26,6 +27,7 @@ const DEFAULT_STATE: BoardState = {
   components: initialComponentState,
   labels: initialLabelState,
   fixVersions: initialFixVersionState,
+  affectsVersions: initialAffectsVersionState,
   customFields: initialCustomFieldState,
   epics: initialEpicState,
   projects: initialProjectState,
