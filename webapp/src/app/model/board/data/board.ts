@@ -12,6 +12,7 @@ import {IssueState} from './issue/issue.model';
 import {BlacklistState} from './blacklist/blacklist.model';
 import {ManualSwimlaneState} from './manual-swimlane/manual-swimlane.model';
 import {EpicState} from './epic/epic.model';
+import {AffectsVersionState} from './affects-version/affects-version.model';
 
 export interface BoardState {
   viewId: number;
@@ -24,6 +25,7 @@ export interface BoardState {
   components: ComponentState;
   labels: LabelState;
   fixVersions: FixVersionState;
+  affectsVersions: AffectsVersionState;
   customFields: CustomFieldState;
   epics: EpicState;
   projects: ProjectState;

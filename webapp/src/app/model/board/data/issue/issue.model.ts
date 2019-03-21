@@ -43,6 +43,7 @@ const DEFAULT_ISSUE: BoardIssue = {
   components: null,
   labels: null,
   fixVersions: null,
+  affectsVersions: null,
   customFields: Map<string, CustomField>(),
   parallelTasks: null,
   selectedParallelTasks: null,
@@ -103,6 +104,7 @@ export class DeserializeIssueLookupParams {
   private _components: List<string> = List<string>();
   private _labels: List<string> = List<string>();
   private _fixVersions: List<string> = List<string>();
+  private _affectsVersions: List<string> = List<string>();
   private _customFields: OrderedMap<string, OrderedMap<string, CustomField>> = OrderedMap<string, OrderedMap<string, CustomField>>();
   private _customFieldsListMap: OrderedMap<string, List<CustomField>>;
   private _boardProjects: Map<string, BoardProject> = Map<string, BoardProject>();
@@ -144,6 +146,11 @@ export class DeserializeIssueLookupParams {
 
   setFixVersions(value: List<string>): DeserializeIssueLookupParams {
     this._fixVersions = value;
+    return this;
+  }
+
+  setAffectsVersions(value: List<string>): DeserializeIssueLookupParams {
+    this._affectsVersions = value;
     return this;
   }
 
@@ -223,6 +230,10 @@ export class DeserializeIssueLookupParams {
 
   get fixVersions(): List<string> {
     return this._fixVersions;
+  }
+
+  get affectsVersions(): List<string> {
+    return this._affectsVersions;
   }
 
   get customFields(): OrderedMap<string, OrderedMap<string, CustomField>> {
@@ -361,6 +372,10 @@ export class IssueUtil {
       input['fixVersions'] = IssueUtil.lookupStringsFromIndexArray(input['fix-versions'], params.fixVersions);
       delete input['fix-versions'];
     }
+    if (input['affects-versions']) {
+      input['affectsVersions'] = IssueUtil.lookupStringsFromIndexArray(input['affects-versions'], params.affectsVersions);
+      delete input['affects-versions'];
+    }
     if (input['custom']) {
       const custom = input['custom'];
       input['customFields'] = Map<string, CustomField>().withMutations(mutable => {
@@ -489,6 +504,7 @@ export class IssueUtil {
       components: IssueUtil.getClearableStringSet(input, 'clear-components', 'components'),
       labels: IssueUtil.getClearableStringSet(input, 'clear-labels', 'labels'),
       fixVersions: IssueUtil.getClearableStringSet(input, 'clear-fix-versions', 'fix-versions'),
+      affectsVersions: IssueUtil.getClearableStringSet(input, 'clear-affects-versions', 'affects-versions'),
       customFields: customFields,
       parallelTasks: params.getParallelTasks(projectCode, overrideType),
       selectedParallelTasks: selectedParallelTasks,

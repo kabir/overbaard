@@ -4,11 +4,11 @@ import {FixVersionState, FixVersionUtil, initialFixVersionState} from './fix-ver
 import {AppState} from '../../../../app-store';
 
 
-const DESERIALIZE_ALL_FIX_VERSIONS = 'DESERIALIZE_ALL_FIX_VERSIONS';
+const DESERIALIZE_ALL_AFFECTS_VERSIONS = 'DESERIALIZE_ALL_FIX_VERSIONS';
 const ADD_FIX_VERSIONS = 'ADD_FIX_VERSIONS';
 
 class DeserializeFixVersionsAction implements Action {
-  readonly type = DESERIALIZE_ALL_FIX_VERSIONS;
+  readonly type = DESERIALIZE_ALL_AFFECTS_VERSIONS;
 
   constructor(readonly payload: List<string>) {
   }
@@ -37,7 +37,7 @@ export class FixVersionActions {
 export function fixVersionMetaReducer(state: FixVersionState = initialFixVersionState, action: Action): FixVersionState {
 
   switch (action.type) {
-    case DESERIALIZE_ALL_FIX_VERSIONS: {
+    case DESERIALIZE_ALL_AFFECTS_VERSIONS: {
       const payload: List<string> = (<DeserializeFixVersionsAction>action).payload;
       return FixVersionUtil.withMutations(state, mutable => {
         if (!mutable.versions.equals(payload)) {
