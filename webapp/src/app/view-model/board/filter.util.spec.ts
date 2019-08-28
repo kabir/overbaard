@@ -264,6 +264,33 @@ describe('Apply filter tests', () => {
         issue.customFields = Map<string, CustomField>({1: {key: 'C1-1', value: 'One One'}});
         expect(filtersFromQs({'cf.1': NONE_FILTER_KEY}).filterVisible(issue)).toBe(false);
       });
+
+      // TODO this whole block
+      describe('Current User', () => {
+        beforeEach(() => {
+          fail("NYI");
+        });
+        it ('Matches current user', () => {
+          const issue: BoardIssueView = emptyIssue();
+          issue['assignee'] = <Assignee>{key: 'bob'};
+          expect(filtersFromQs({assignee: CURRENT_USER_FILTER_KEY}, 'bob').filterVisible(issue)).toBe(true);
+        });
+        it ('Does not match current user', () => {
+          const issue: BoardIssueView = emptyIssue();
+          issue['assignee'] = <Assignee>{key: 'bob'};
+          expect(filtersFromQs({assignee: CURRENT_USER_FILTER_KEY}, 'rob').filterVisible(issue)).toBe(false);
+        });
+        it ('Matches current user and explicit filter', () => {
+          const issue: BoardIssueView = emptyIssue();
+          issue['assignee'] = <Assignee>{key: 'bob'};
+          expect(filtersFromQs({assignee: CURRENT_USER_FILTER_KEY + ',bob'}, 'bob').filterVisible(issue)).toBe(true);
+        });
+        it ('Does not match current user but matches explicit filter', () => {
+          const issue: BoardIssueView = emptyIssue();
+          issue['assignee'] = <Assignee>{key: 'bob'};
+          expect(filtersFromQs({assignee: CURRENT_USER_FILTER_KEY + ',bob'}, 'rob').filterVisible(issue)).toBe(true);
+        });
+      });
     });
     describe('Parallel Tasks', () => {
       it('None', () => {
