@@ -1,6 +1,6 @@
 import {Action, createSelector} from '@ngrx/store';
 import {Map, OrderedMap} from 'immutable';
-import {CustomField, CustomFieldState, CustomFieldUtil, initialCustomFieldState} from './custom-field.model';
+import {CustomField, CustomFieldMetadata, CustomFieldState, CustomFieldUtil, initialCustomFieldState} from './custom-field.model';
 import {AppState} from '../../../../app-store';
 
 
@@ -10,7 +10,7 @@ const ADD_CUSTOM_FIELDS = 'ADD_CUSTOM_FIELDS';
 class DeserializeCustomFieldsAction implements Action {
   readonly type = DESERIALIZE_ALL_CUSTOM_FIELDS;
 
-  constructor(readonly payload: OrderedMap<string, OrderedMap<string, CustomField>>) {
+  constructor(readonly payload: OrderedMap<string, OrderedMap<string, CustomField>>, readonly fieldMetadata: Map<string, CustomFieldMetadata>) {
   }
 }
 
@@ -24,22 +24,35 @@ class AddCustomFieldsAction implements Action {
 export class CustomFieldActions {
   static createDeserializeCustomFields(input: any): Action {
     const keys: string[] = Object.keys(input).sort((a, b) => a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase()));
+    const mutableFieldMetadatas: Map<string, CustomFieldMetadata> = Map<string, CustomFieldMetadata>().asMutable();
+
     const map: OrderedMap<string, OrderedMap<string, CustomField>>
       = OrderedMap<string, OrderedMap<string, CustomField>>().withMutations(mutable => {
       for (const key of keys) {
-        mutable.set(key, this.createMapFromInput(input, key));
+        let inputArray: any[] = input[key];
+        // If we have any metadata about the field (e.g. to convey to the front-end the type of the field), it will be in a specially
+        // formatted element at the start of the array
+        if (inputArray.length > 1 && inputArray[0]['_metadata']) {
+          const metadata: CustomFieldMetadata = CustomFieldUtil.metadataFromJs(inputArray[0]['_metadata']);
+          mutableFieldMetadatas.set(key, metadata);
+          inputArray = inputArray.slice(1, inputArray.length);
+        }
+
+        mutable.set(key, this.createMapFromInput(inputArray));
       }
     });
 
-    return new DeserializeCustomFieldsAction(map);
+    return new DeserializeCustomFieldsAction(map, mutableFieldMetadatas.asImmutable());
   }
 
   static createAddCustomFields(input: any): Action {
     let map: OrderedMap<string, OrderedMap<string, CustomField>> = OrderedMap<string, OrderedMap<string, CustomField>>();
+    const mutableFieldMetadatas: Map<string, CustomFieldMetadata> = Map<string, CustomFieldMetadata>().asMutable();
     if (input) {
       map = map.withMutations(mutable => {
         for (const key of Object.keys(input)) {
-          mutable.set(key, this.createMapFromInput(input, key));
+          const inputArray: any[] = input[key];
+          mutable.set(key, this.createMapFromInput(inputArray));
         }
       });
     }
@@ -47,8 +60,7 @@ export class CustomFieldActions {
     return new AddCustomFieldsAction(map);
   }
 
-  private static createMapFromInput(input: any, key: string): OrderedMap<string, CustomField> {
-    const inputArray: any[] = input[key];
+  private static createMapFromInput(inputArray: any[]): OrderedMap<string, CustomField> {
     return OrderedMap<string, CustomField>().withMutations(mutable => {
       for (let i = 0 ; i < inputArray.length ; i++) {
         const cf = CustomFieldUtil.fromJs(inputArray[i]);
@@ -63,10 +75,13 @@ export function customFieldMetaReducer(state: CustomFieldState = initialCustomFi
 
   switch (action.type) {
     case DESERIALIZE_ALL_CUSTOM_FIELDS: {
-      const payload: OrderedMap<string, OrderedMap<string, CustomField>> = (<DeserializeCustomFieldsAction>action).payload;
+      const scfa: DeserializeCustomFieldsAction = <DeserializeCustomFieldsAction>action;
       const newState = CustomFieldUtil.withMutations(state, mutable => {
-        if (!mutable.fields.equals(payload)) {
-          mutable.fields = payload;
+        if (!mutable.fields.equals(scfa.payload)) {
+          mutable.fields = scfa.payload;
+        }
+        if (!mutable.fieldMetadata.equals(scfa.fieldMetadata)) {
+          mutable.fieldMetadata = scfa.fieldMetadata;
         }
       });
       return newState;

@@ -32,40 +32,116 @@ export function getTestCustomFieldsInput() {
   });
 }
 
+function getTestCustomFieldsInputWithMetadata() {
+  return cloneObject({
+    'Custom-1': [
+      {
+        _metadata: {
+          type: 'user'
+        }
+      },
+      {
+        key: 'c1-A',
+        value: 'First C1'
+      }
+    ],
+    'Custom-2': [
+      {
+        key: 'c2-A',
+        value: 'First C2'
+      }
+    ],
+    'Custom-3': [
+      {
+        _metadata: {
+          type: 'thing'
+        }
+      },
+      {
+        key: 'c3-A',
+        value: 'First C3'
+      }
+    ]
+  });
+}
+
 export function getTestCustomFieldState(): CustomFieldState {
   const input: any = getTestCustomFieldsInput();
   return customFieldMetaReducer(initialCustomFieldState, CustomFieldActions.createDeserializeCustomFields(input));
 }
 
+function getTestCustomFieldStateWithMetadata(): CustomFieldState {
+  const input: any = getTestCustomFieldsInputWithMetadata();
+  return customFieldMetaReducer(initialCustomFieldState, CustomFieldActions.createDeserializeCustomFields(input));
+}
+
 describe('CustomField reducer tests', () => {
   describe('Deserialize', () => {
-    it('Deserialize initial state', () => {
-      const state: CustomFieldState = getTestCustomFieldState();
-      const map: OrderedMap<string, List<CustomField>> = state.fields.map(value => value.toList()).toOrderedMap();
-      expect(map.size).toBe(2);
-      const l1 = map.get('Custom-1');
-      expect(l1.size).toBe(3);
-      expect(l1.get(0).key).toEqual('c1-A');
-      expect(l1.get(0).value).toEqual('First C1');
-      expect(l1.get(1).key).toEqual('c1-B');
-      expect(l1.get(1).value).toEqual('Second C1');
-      expect(l1.get(2).key).toEqual('c1-C');
-      expect(l1.get(2).value).toEqual('Third C1');
-      const l2 = map.get('Custom-2');
-      expect(l2.size).toBe(2);
-      expect(l2.get(0).key).toEqual('c2-A');
-      expect(l2.get(0).value).toEqual('First C2');
-      expect(l2.get(1).key).toEqual('c2-B');
-      expect(l2.get(1).value).toEqual('Second C2');
+    describe('No metadata', () => {
+      it('Deserialize initial state', () => {
+        const state: CustomFieldState = getTestCustomFieldState();
+        const map: OrderedMap<string, List<CustomField>> = state.fields.map(value => value.toList()).toOrderedMap();
+        expect(map.size).toBe(2);
+        expect(state.fieldMetadata.size).toBe(0);
+        const l1 = map.get('Custom-1');
+        expect(l1.size).toBe(3);
+        expect(l1.get(0).key).toEqual('c1-A');
+        expect(l1.get(0).value).toEqual('First C1');
+        expect(l1.get(1).key).toEqual('c1-B');
+        expect(l1.get(1).value).toEqual('Second C1');
+        expect(l1.get(2).key).toEqual('c1-C');
+        expect(l1.get(2).value).toEqual('Third C1');
+        const l2 = map.get('Custom-2');
+        expect(l2.size).toBe(2);
+        expect(l2.get(0).key).toEqual('c2-A');
+        expect(l2.get(0).value).toEqual('First C2');
+        expect(l2.get(1).key).toEqual('c2-B');
+        expect(l2.get(1).value).toEqual('Second C2');
 
+      });
+
+      it ('Deserialize same state', () => {
+        const stateA: CustomFieldState = getTestCustomFieldState();
+        const stateB: CustomFieldState =
+          customFieldMetaReducer(stateA, CustomFieldActions.createDeserializeCustomFields(getTestCustomFieldsInput()));
+        expect(stateA).toBe(stateB);
+      });
     });
 
-    it ('Deserialize same state', () => {
-      const stateA: CustomFieldState = getTestCustomFieldState();
-      const stateB: CustomFieldState =
-        customFieldMetaReducer(stateA, CustomFieldActions.createDeserializeCustomFields(getTestCustomFieldsInput()));
-      expect(stateA).toBe(stateB);
+    describe('With metadata', () => {
+      it('Deserialize initial state', () => {
+        const state: CustomFieldState = getTestCustomFieldStateWithMetadata();
+        const map: OrderedMap<string, List<CustomField>> = state.fields.map(value => value.toList()).toOrderedMap();
+        expect(map.size).toBe(3);
+        expect(state.fieldMetadata.size).toBe(2);
+
+        const l1 = map.get('Custom-1');
+        expect(l1.size).toBe(1);
+        expect(l1.get(0).key).toEqual('c1-A');
+        expect(l1.get(0).value).toEqual('First C1');
+        expect(state.fieldMetadata.get('Custom-1').type).toBe('user', `expected ${state.fieldMetadata.get('Custom-1')} to equal user`);
+
+        const l2 = map.get('Custom-2');
+        expect(l2.size).toBe(1);
+        expect(l2.get(0).key).toEqual('c2-A');
+        expect(l2.get(0).value).toEqual('First C2');
+        expect(state.fieldMetadata.get('Custom-2')).toBeFalsy();
+
+        const l3 = map.get('Custom-3');
+        expect(l3.size).toBe(1);
+        expect(l3.get(0).key).toEqual('c3-A');
+        expect(l3.get(0).value).toEqual('First C3');
+        expect(state.fieldMetadata.get('Custom-3').type).toBe('thing');
+      });
+
+      it ('Deserialize same state', () => {
+        const stateA: CustomFieldState = getTestCustomFieldStateWithMetadata();
+        const stateB: CustomFieldState =
+          customFieldMetaReducer(stateA, CustomFieldActions.createDeserializeCustomFields(getTestCustomFieldsInputWithMetadata()));
+        expect(stateA).toBe(stateB);
+      });
     });
+
   });
 
   describe('Changes', () => {

@@ -81,6 +81,11 @@
   "custom": {
     "User Custom Field": [
       {
+        "_metadata": {
+          "type": "user"
+        }
+      },
+      {
         "key": "userA",
         "value": "Another User"
       },
