@@ -399,7 +399,10 @@ export class UserSettingUpdater {
       }
     } else {
       if (this._mainUtil.boardState.customFields.fields.get(name)) {
-        atributes = FilterAttributesUtil.createCustomFieldFilterAttributes(name);
+        atributes = FilterAttributesUtil.createCustomFieldFilterAttributes(
+          name,
+          this._mainUtil.boardState.customFields.fieldMetadata.get(name));
+
         values = {};
         for (const key of keys) {
           values[key] = true;

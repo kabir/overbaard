@@ -15,6 +15,7 @@ import {
   PROJECT_ATTRIBUTES
 } from './board-filter.constants';
 import {UserSettingActions} from '../user-setting.reducer';
+import {CustomFieldMetadata} from '../../data/custom-field/custom-field.model';
 
 describe('BoardFilter reducer tests', () => {
 
@@ -137,7 +138,7 @@ describe('BoardFilter reducer tests', () => {
     });
 
     it ('Update custom field', () => {
-      const customFieldAttributes: FilterAttributes = FilterAttributesUtil.createCustomFieldFilterAttributes('Custom2');
+      const customFieldAttributes: FilterAttributes = FilterAttributesUtil.createCustomFieldFilterAttributes('Custom2', null);
       state = boardFilterMetaReducer(
         state, BoardFilterActions.createUpdateFilter(customFieldAttributes, {CF21: false, CF22: true, CF23: true}));
       const checker: FilterChecker = new FilterChecker();

@@ -5,7 +5,7 @@ import {Dictionary} from '../../common/dictionary';
 import {BoardIssueView} from './board-issue-view';
 import {Assignee, NO_ASSIGNEE} from '../../model/board/data/assignee/assignee.model';
 import {List, Map, OrderedMap, OrderedSet} from 'immutable';
-import {CustomField} from '../../model/board/data/custom-field/custom-field.model';
+import {CustomField, CustomFieldMetadata} from '../../model/board/data/custom-field/custom-field.model';
 import {AllFilters} from './filter.util';
 import {CURRENT_USER_FILTER_KEY, NONE_FILTER_KEY} from '../../model/board/user/board-filter/board-filter.constants';
 import {
@@ -19,6 +19,7 @@ import {LinkedIssue} from '../../model/board/data/issue/linked-issue';
 import {BoardSearchFilterState, initialBoardSearchFilterState} from '../../model/board/user/board-filter/board-search-filter.model';
 import {boardSearchFilterMetaReducer} from '../../model/board/user/board-filter/board-search-filter.reducer';
 import {Action} from '@ngrx/store';
+import {All} from 'tslint/lib/rules/completedDocsRule';
 
 describe('Apply filter tests', () => {
 
@@ -293,35 +294,36 @@ describe('Apply filter tests', () => {
           issue.selectedParallelTasks = createSelecteParallelTasks([[0, 1]]);
         });
         it ('Matches one', () => {
-          expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'One'}).filterVisible(issue)).toBe(true);
+          expect(new FiltersBuilder({'pt.CD': 'One'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
         });
         it ('Matches other', () => {
-          expect(filtersWithProjectStateFromQs(projectState, {'pt.TD': 'Dos'}).filterVisible(issue)).toBe(true);
+          expect(new FiltersBuilder({'pt.TD': 'Dos'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
         });
         it ('Matches both', () => {
-          expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'One', 'pt.TD': 'Dos'}).filterVisible(issue)).toBe(true);
+          expect(new FiltersBuilder({'pt.CD': 'One', 'pt.TD': 'Dos'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
         });
         it ('Matches one of several', () => {
-          expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'One,Two,Three'}).filterVisible(issue)).toBe(true);
+          expect(new FiltersBuilder({'pt.CD': 'One,Two,Three'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
         });
         it ('Matches other of several', () => {
-          expect(filtersWithProjectStateFromQs(projectState, {'pt.TD': 'Uno,Dos,Tres'}).filterVisible(issue)).toBe(true);
+          expect(new FiltersBuilder({'pt.TD': 'Uno,Dos,Tres'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
         });
         it ('Matches both of several', () => {
           expect(
-            filtersWithProjectStateFromQs(
-              projectState, {'pt.CD': 'One, Two, Three', 'pt.TD': 'Uno,Dos,Tres'}).filterVisible(issue)).toBe(true);
+            new FiltersBuilder({'pt.CD': 'One, Two, Three', 'pt.TD': 'Uno,Dos,Tres'})
+              .projectState(projectState)
+              .build().filterVisible(issue)).toBe(true);
         });
         it ('Skip matching for unknown', () => {
           // Since filters are chosen for the whole board, and parallel tasks are configured per project (with possible issue types)
           // we only want to filter ones which have this PT set up
-          expect(filtersWithProjectStateFromQs(projectState, {'pt.UNKNOWN': 'One'}).filterVisible(issue)).toBe(false);
+          expect(new FiltersBuilder({'pt.UNKNOWN': 'One'}).projectState(projectState).build().filterVisible(issue)).toBe(false);
         });
         it ('Non Match - one', () => {
-          expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'Two'}).filterVisible(issue)).toBe(false);
+          expect(new FiltersBuilder({'pt.CD': 'Two'}).projectState(projectState).build().filterVisible(issue)).toBe(false);
         });
         it ('Non Match - other', () => {
-          expect(filtersWithProjectStateFromQs(projectState, {'pt.TD': 'Tres'}).filterVisible(issue)).toBe(false);
+          expect(new FiltersBuilder({'pt.TD': 'Tres'}).projectState(projectState).build().filterVisible(issue)).toBe(false);
         });
       });
       describe('Overrides', () => {
@@ -358,16 +360,16 @@ describe('Apply filter tests', () => {
             issue.selectedParallelTasks = createSelecteParallelTasks([[0, 1]]);
           });
           it ('Matches one', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'One'}).filterVisible(issue)).toBe(true);
+            expect(new FiltersBuilder({'pt.CD': 'One'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
           });
           it ('Matches other', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.TD': 'Dos'}).filterVisible(issue)).toBe(true);
+            expect(new FiltersBuilder({'pt.TD': 'Dos'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
           });
           it ('Non-Match one', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'To'}).filterVisible(issue)).toBe(false);
+            expect(new FiltersBuilder({'pt.CD': 'To'}).projectState(projectState).build().filterVisible(issue)).toBe(false);
           });
           it ('Non-Match other', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.TD': 'Drei'}).filterVisible(issue)).toBe(false);
+            expect(new FiltersBuilder({'pt.TD': 'Drei'}).projectState(projectState).build().filterVisible(issue)).toBe(false);
           });
         });
         describe('Other PTs', () => {
@@ -377,16 +379,16 @@ describe('Apply filter tests', () => {
             issue.selectedParallelTasks = createSelecteParallelTasks([[1, 0]]);
           });
           it ('Matches one', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'En'}).filterVisible(issue)).toBe(true);
+            expect(new FiltersBuilder({'pt.CD': 'En'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
           });
           it ('Matches other', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.TD': 'Zwei'}).filterVisible(issue)).toBe(true);
+            expect(new FiltersBuilder({'pt.TD': 'Zwei'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
           });
           it ('Non-Match one', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'One'}).filterVisible(issue)).toBe(false);
+            expect(new FiltersBuilder({'pt.CD': 'One'}).projectState(projectState).build().filterVisible(issue)).toBe(false);
           });
           it ('Non-Match other', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.TD': 'Dos'}).filterVisible(issue)).toBe(false);
+            expect(new FiltersBuilder({'pt.TD': 'Dos'}).projectState(projectState).build().filterVisible(issue)).toBe(false);
           });
         });
       });
@@ -419,10 +421,10 @@ describe('Apply filter tests', () => {
             issue.selectedParallelTasks = createSelecteParallelTasks([[0, 1]]);
           });
           it ('Matches one', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'One'}).filterVisible(issue)).toBe(true);
+            expect(new FiltersBuilder({'pt.CD': 'One'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
           });
           it ('Matches other', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.TD': 'Dos'}).filterVisible(issue)).toBe(true);
+            expect(new FiltersBuilder({'pt.TD': 'Dos'}).projectState(projectState).build().filterVisible(issue)).toBe(true);
           });
         });
         describe('Other PTs', () => {
@@ -432,10 +434,10 @@ describe('Apply filter tests', () => {
             issue.selectedParallelTasks = createSelecteParallelTasks([[1, 0]]);
           });
           it ('Non-Match one overridden', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.CD': 'En'}).filterVisible(issue)).toBe(false);
+            expect(new FiltersBuilder({'pt.CD': 'En'}).projectState(projectState).build().filterVisible(issue)).toBe(false);
           });
           it ('Non-Match other', () => {
-            expect(filtersWithProjectStateFromQs(projectState, {'pt.TD': 'Zwei'}).filterVisible(issue)).toBe(false);
+            expect(new FiltersBuilder({'pt.TD': 'Zwei'}).projectState(projectState).build().filterVisible(issue)).toBe(false);
           });
         });
       });
@@ -533,21 +535,37 @@ describe('Apply filter tests', () => {
 
 
   function filtersFromQs(qs: Dictionary<string>, currentUser?: string): AllFilters {
-    const projectState = {
-        boardProjects: null,
-        linkedProjects: null,
-        parallelTasks: Map<string, List<List<ParallelTask>>>()
-      };
-    return filtersWithProjectStateFromQs(projectState, qs, currentUser);
+    return new FiltersBuilder(qs, currentUser).build();
   }
 
-  function filtersWithProjectStateFromQs(projectState: ProjectState, qs: Dictionary<string>, currentUser?: string): AllFilters {
-    const action: Action = UserSettingActions.createInitialiseFromQueryString(qs);
-    const boardFilters: BoardFilterState =
-      boardFilterMetaReducer(initialBoardFilterState, action);
-    const searchFilters: BoardSearchFilterState =
-      boardSearchFilterMetaReducer(initialBoardSearchFilterState, action);
-    return new AllFilters(boardFilters, searchFilters, projectState, currentUser);
+  class FiltersBuilder {
+    private _projectState: ProjectState = {
+      boardProjects: null,
+      linkedProjects: null
+    };
+
+    private _fieldMetadata: Map<string, CustomFieldMetadata> = Map<string, CustomFieldMetadata>().asMutable();
+    constructor(private _qs: Dictionary<string>, private _currentUser?: string) {
+    }
+
+    projectState(projectState: ProjectState): FiltersBuilder {
+      this._projectState = projectState;
+      return this;
+    }
+
+    fieldMetadata(fieldMetadata: Map<string, CustomFieldMetadata>): FiltersBuilder {
+      this._fieldMetadata = fieldMetadata;
+      return this;
+    }
+
+    build(): AllFilters {
+      const action: Action = UserSettingActions.createInitialiseFromQueryString(this._qs);
+      const boardFilters: BoardFilterState =
+        boardFilterMetaReducer(initialBoardFilterState, action);
+      const searchFilters: BoardSearchFilterState =
+        boardSearchFilterMetaReducer(initialBoardSearchFilterState, action);
+      return new AllFilters(boardFilters, searchFilters, this._projectState, this._fieldMetadata.asImmutable(), this._currentUser);
+    }
   }
 
   function emptyIssue(): BoardIssueView {

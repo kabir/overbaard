@@ -59,6 +59,10 @@ export class CustomFieldUtil {
       mutate(mutable);
     });
   }
+
+  static hasCurrentUser(s: CustomFieldState) {
+
+  }
 }
 
 

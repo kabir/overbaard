@@ -28,8 +28,8 @@ import {
   PROJECT_ATTRIBUTES
 } from '../../../model/board/user/board-filter/board-filter.constants';
 import {BoardFilterActions} from '../../../model/board/user/board-filter/board-filter.reducer';
-import {customFieldsSelector} from '../../../model/board/data/custom-field/custom-field.reducer';
-import {CustomField} from '../../../model/board/data/custom-field/custom-field.model';
+import {getCustomFieldsState, customFieldsSelector} from '../../../model/board/data/custom-field/custom-field.reducer';
+import {CustomField, CustomFieldState} from '../../../model/board/data/custom-field/custom-field.model';
 import {BoardProject, ParallelTask} from '../../../model/board/data/project/project.model';
 import {UserSettingActions} from '../../../model/board/user/user-setting.reducer';
 import {UserSettingState} from '../../../model/board/user/user-setting';
@@ -134,7 +134,7 @@ export class BoardSettingsDrawerComponent implements OnInit, OnDestroy {
     this.createGroupFromObservable(this._store.select(fixVersionsSelector), FIX_VERSION_ATTRIBUTES,
       fixVersions => fixVersions.map(f => FilterFormEntry(f, f)).toArray(),
       () => this.userSettings.filters.fixVersion);
-    this.createCustomFieldGroups(this.userSettings.filters, this._store.select(customFieldsSelector));
+    this.createCustomFieldGroups(this.userSettings.filters, this._store.select(getCustomFieldsState));
     this.createParallelTaskGroup(this.userSettings.filters, this._store.select(boardProjectsSelector));
 
 
@@ -224,22 +224,23 @@ export class BoardSettingsDrawerComponent implements OnInit, OnDestroy {
   }
 
   private createCustomFieldGroups(filterState: BoardFilterState,
-                                  observable: Observable<OrderedMap<string,
-                                    OrderedMap<string, CustomField>>>) {
+                                  observable: Observable<CustomFieldState>) {
     observable
       .pipe(
         take(1)
       )
       .subscribe(
-        customFields => {
-          customFields.forEach((fields, key) => {
+        state => {
+            state.fields.forEach((fields, key) => {
             const filterFormEntries: FilterFormEntry[] = fields.map(c => FilterFormEntry(c.key, c.value)).toArray();
-            const cfFilterAttributes: FilterAttributes = FilterAttributesUtil.createCustomFieldFilterAttributes(key);
+            const cfFilterAttributes: FilterAttributes =
+              FilterAttributesUtil.createCustomFieldFilterAttributes(key, state.fieldMetadata.get(key));
             this.filterList.push(cfFilterAttributes);
             this.createGroup(filterFormEntries, cfFilterAttributes, () => filterState.customField.get(key));
           });
         }
       );
+
   }
 
   private createParallelTaskGroup(filterState: BoardFilterState, observable: Observable<OrderedMap<string, BoardProject>>) {
@@ -293,7 +294,7 @@ export class BoardSettingsDrawerComponent implements OnInit, OnDestroy {
     if (filterAttributes.hasNone) {
       filterFormEntries.unshift(FilterFormEntry(this.none, 'None'));
     }
-    if (filterAttributes === ASSIGNEE_ATTRIBUTES) {
+    if (filterAttributes.hasCurrentUser) {
       filterFormEntries.unshift(FilterFormEntry(this.currentUser, 'Current User'));
     }
     let set: Set<string> = setFilterGetter();

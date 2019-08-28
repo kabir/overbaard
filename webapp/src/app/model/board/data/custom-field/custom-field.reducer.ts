@@ -110,6 +110,8 @@ export function customFieldMetaReducer(state: CustomFieldState = initialCustomFi
 }
 
 
-const getCustomFieldsState = (state: AppState) => state.board.customFields;
+export const getCustomFieldsState = (state: AppState) => state.board.customFields;
 const getCustomFields = (state: CustomFieldState) => state.fields;
+
+
 export const customFieldsSelector = createSelector(getCustomFieldsState, getCustomFields);
