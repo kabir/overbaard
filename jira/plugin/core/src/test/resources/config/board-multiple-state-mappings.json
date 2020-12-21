@@ -1,0 +1,44 @@
+{
+  "name": "Test Downstream Project",
+  "code": "TST",
+  "states": [
+    {"name": "S-A"},
+    {"name": "S-B"},
+    {"name": "S-C"}
+  ],
+  "priorities": [
+    {"name": "highest", "colour": "colour-highest"},
+    {"name": "high", "colour": "colour-high"},
+    {"name": "low", "colour": "colour-low"},
+    {"name": "lowest", "colour": "colour-lowest"}
+  ],
+  "issue-types": [
+    {"name": "task", "colour": "colour-task"},
+    {"name": "bug", "colour": "colour-bug"},
+    {"name": "feature", "colour": "colour-feature"}
+  ],
+  "projects": [
+    {
+      "code": "TDP",
+      "query-filter": null,
+      "colour": "#4667CA",
+      "state-links": {
+        "TDP-A" : "S-A",
+        "TDP-B" : "S-A",
+        "TDP-C" : "S-B",
+        "TDP-D" : "S-B"
+      }
+    },
+    {
+      "code": "TBG",
+      "query-filter": null,
+      "colour": "#CA6746",
+      "state-links": {
+        "TBG-X": "S-B",
+        "TBG-Y": "S-C",
+        "TBG-Z": "S-C"
+      }
+    }
+  ],
+  "linked-projects": {}
+}

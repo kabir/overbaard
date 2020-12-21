@@ -66,6 +66,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -124,20 +125,48 @@ public class BoardManagerTest extends AbstractBoardTest {
         final ModelNode tdp = getProjectFromBoardNode(boardNode, "TDP");
         final ModelNode tdpLinks = tdp.get(STATE_LINKS);
         Assert.assertEquals(4, tdpLinks.keys().size());
-        Assert.assertEquals("TDP-A", tdpLinks.get("S-A").asString());
-        Assert.assertEquals("TDP-B", tdpLinks.get("S-B").asString());
-        Assert.assertEquals("TDP-C", tdpLinks.get("S-C").asString());
-        Assert.assertEquals("TDP-D", tdpLinks.get("S-D").asString());
+        checkStateLinks(tdpLinks.get("S-A"), "TDP-A");
+        checkStateLinks(tdpLinks.get("S-B"), "TDP-B");
+        checkStateLinks(tdpLinks.get("S-C"), "TDP-C");
+        checkStateLinks(tdpLinks.get("S-D"), "TDP-D");
 
         final ModelNode tbg = getProjectFromBoardNode(boardNode, "TBG");
         final ModelNode tbgLinks = tbg.get(STATE_LINKS);
         Assert.assertEquals(2, tbgLinks.keys().size());
-        Assert.assertEquals("TBG-X", tbgLinks.get("S-B").asString());
-        Assert.assertEquals("TBG-Y", tbgLinks.get("S-C").asString());
+        checkStateLinks(tbgLinks.get("S-B"), "TBG-X");
+        checkStateLinks(tbgLinks.get("S-C"), "TBG-Y");
 
         // No overrides set up
         Assert.assertFalse(tdp.hasDefined(OVERRIDES));
         Assert.assertFalse(tbg.hasDefined(OVERRIDES));
+    }
+
+    @Test
+    public void testMultipleProjectStateLinksNoOverrides() throws Exception {
+        initializeMocks("config/board-multiple-state-mappings.json");
+        ModelNode boardNode = getJson(0);
+        // Check the project state-links and that there are no overrides for the projects in this board
+        final ModelNode tdp = getProjectFromBoardNode(boardNode, "TDP");
+        final ModelNode tdpLinks = tdp.get(STATE_LINKS);
+        checkStateLinks(tdpLinks.get("S-A"), "TDP-A", "TDP-B");
+        checkStateLinks(tdpLinks.get("S-B"), "TDP-C", "TDP-D");
+
+        final ModelNode tbg = getProjectFromBoardNode(boardNode, "TBG");
+        final ModelNode tbgLinks = tbg.get(STATE_LINKS);
+        Assert.assertEquals(2, tbgLinks.keys().size());
+        checkStateLinks(tbgLinks.get("S-B"), "TBG-X");
+        checkStateLinks(tbgLinks.get("S-C"), "TBG-Y", "TBG-Z");
+
+        // No overrides set up
+        Assert.assertFalse(tdp.hasDefined(OVERRIDES));
+        Assert.assertFalse(tbg.hasDefined(OVERRIDES));
+    }
+
+    private void checkStateLinks(ModelNode links, String... states) {
+        Assert.assertEquals(ModelType.LIST, links.getType());
+        List<String> expectedStates = Arrays.asList(states);
+        List<String> actualStates = links.asList().stream().map(n -> n.asString()).collect(Collectors.toList());
+        Assert.assertEquals(expectedStates, actualStates);
     }
 
     @Test
@@ -148,17 +177,17 @@ public class BoardManagerTest extends AbstractBoardTest {
         final ModelNode tdp = getProjectFromBoardNode(boardNode, "TDP");
         final ModelNode tdpLinks = tdp.get(STATE_LINKS);
         Assert.assertEquals(4, tdpLinks.keys().size());
-        Assert.assertEquals("TDP-A", tdpLinks.get("S-A").asString());
-        Assert.assertEquals("TDP-B", tdpLinks.get("S-B").asString());
-        Assert.assertEquals("TDP-C", tdpLinks.get("S-C").asString());
-        Assert.assertEquals("TDP-D", tdpLinks.get("S-D").asString());
+        checkStateLinks(tdpLinks.get("S-A"), "TDP-A");
+        checkStateLinks(tdpLinks.get("S-B"), "TDP-B");
+        checkStateLinks(tdpLinks.get("S-C"), "TDP-C");
+        checkStateLinks(tdpLinks.get("S-D"), "TDP-D");
 
 
         final ModelNode tbg = getProjectFromBoardNode(boardNode, "TBG");
         final ModelNode tbgLinks = tbg.get(STATE_LINKS);
         Assert.assertEquals(2, tbgLinks.keys().size());
-        Assert.assertEquals("TBG-X", tbgLinks.get("S-B").asString());
-        Assert.assertEquals("TBG-Y", tbgLinks.get("S-C").asString());
+        checkStateLinks(tbgLinks.get("S-B"), "TBG-X");
+        checkStateLinks(tbgLinks.get("S-C"), "TBG-Y");
 
         // Check the issue type overrides for the TDP project
         final ModelNode tdpOverridesNode = tdp.get(OVERRIDES, STATE_LINKS);
@@ -173,8 +202,8 @@ public class BoardManagerTest extends AbstractBoardTest {
         Assert.assertEquals("bug", taskBugIssueTypes.get(1).asString());
         final ModelNode taskBugLinks = taskBugOverrides.get(OVERRIDE);
         Assert.assertEquals(2, taskBugLinks.keys().size());
-        Assert.assertEquals("TDP-A", taskBugLinks.get("S-A").asString());
-        Assert.assertEquals("TDP-D", taskBugLinks.get("S-D").asString());
+        checkStateLinks(taskBugLinks.get("S-A"), "TDP-A");
+        checkStateLinks(taskBugLinks.get("S-D"), "TDP-D");
 
         // No overrides set up
         Assert.assertFalse(tbg.hasDefined(OVERRIDES));
