@@ -5,6 +5,10 @@
 /tmp
 /out-tsc
 
+# This one should not be committed according to https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
+.yarn/install-state.gz
+.yarn/unplugged/
+
 # dependencies
 /node_modules
 
