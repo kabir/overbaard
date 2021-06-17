@@ -8,10 +8,10 @@ import {IssueDetailState} from '../../../model/board/user/issue-detail/issue-det
 import {BehaviorSubject, Subject, Observable} from 'rxjs';
 import {takeUntil} from 'rxjs/operators';
 import {BoardHeader} from '../../../view-model/board/board-header';
-import {Injectable} from '@angular/core';
+import {Component} from '@angular/core';
 
-@Injectable()
-export abstract class FixedHeaderView implements OnChanges {
+@Component({template: ''})
+export class FixedHeaderView implements OnChanges {
 
   @Input()
   board: BoardViewModel;
@@ -83,5 +83,6 @@ export abstract class FixedHeaderView implements OnChanges {
   onToggleBacklog(header: BoardHeader) {
     this.toggleBacklog.next(header);
   }
+
 
 }
