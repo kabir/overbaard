@@ -23,7 +23,7 @@ import {ScrollPositionAndHeight} from '../../../../../common/scroll-position-hei
   styleUrls: ['./kanban-view-column-group.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class KanbanViewColumnGroupComponent implements OnInit, OnChanges {
+export class KanbanViewColumnGroupComponent implements OnChanges {
 
   @Input()
   header: BoardHeader;
@@ -57,9 +57,6 @@ export class KanbanViewColumnGroupComponent implements OnInit, OnChanges {
   groupType: number;
 
   constructor() {
-  }
-
-  ngOnInit() {
   }
 
   ngOnChanges(changes: SimpleChanges): void {

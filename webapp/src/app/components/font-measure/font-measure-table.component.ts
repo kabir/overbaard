@@ -25,7 +25,7 @@ import {Dictionary} from '../../common/dictionary';
   styles: [],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FontMeasureTableComponent implements OnInit, AfterViewInit {
+export class FontMeasureTableComponent implements AfterViewInit {
 
   // Leave this commented out so we can easily reenable
   // testStrings: string[] = ['One', 'Two', 'One Two', 'WFCORE-1234'];
@@ -33,9 +33,6 @@ export class FontMeasureTableComponent implements OnInit, AfterViewInit {
   @ViewChild('myCanvas') myCanvas;
 
   constructor() {
-  }
-
-  ngOnInit(): void {
   }
 
   times10(s: string): string {

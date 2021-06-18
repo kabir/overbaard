@@ -8,7 +8,7 @@ import {ParallelTask, ParallelTaskOption} from '../../../model/board/data/projec
   styleUrls: ['./parallel-task-selector.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ParallelTaskSelectorComponent implements OnInit {
+export class ParallelTaskSelectorComponent {
 
   parallelTask: ParallelTask;
   issueOption: ParallelTaskOption;
@@ -22,10 +22,6 @@ export class ParallelTaskSelectorComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: any) {
     this.parallelTask = data['task'];
     this.issueOption = data['option'];
-  }
-
-  ngOnInit(): void {
-
   }
 
   get option(): ParallelTaskOption {

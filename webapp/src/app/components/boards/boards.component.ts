@@ -10,7 +10,7 @@ import {AppHeaderService} from '../../services/app-header.service';
   providers: [BoardsService],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BoardsComponent implements OnInit, OnDestroy {
+export class BoardsComponent implements OnInit {
 
   boards$: Observable<any[]>;
 
@@ -22,9 +22,6 @@ export class BoardsComponent implements OnInit, OnDestroy {
     // TODO turn on/off progress indicator and log errors
     this.boards$ = this._boardsService.loadBoardsList(true);
     this._appHeaderService.setTitle('Boards List');
-  }
-
-  ngOnDestroy(): void {
   }
 }
 

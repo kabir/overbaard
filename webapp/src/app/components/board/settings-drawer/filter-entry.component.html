@@ -66,7 +66,7 @@
 
     <div [formGroup]="filterForm" #f="ngForm">
       <!-- Only do this for long lists and NOT for the parallel tasks -->
-      <mat-form-field *ngIf="filterAttributes.key != 'Parallel Tasks' && filterEntries.length > 5">
+      <mat-form-field *ngIf="filterAttributes.key !== 'Parallel Tasks' && filterEntries.length > 5">
         <input
           matInput
           [placeholder]="'Filter options'"

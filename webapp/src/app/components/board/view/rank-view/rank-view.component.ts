@@ -12,7 +12,7 @@ import {
   SimpleChange,
   SimpleChanges
 } from '@angular/core';
-import {FixedHeaderView} from '../fixed-header-view';
+import {FixedHeaderViewAbstractComponent} from '../fixed-header-view';
 import {BoardViewMode} from '../../../../model/board/user/board-view-mode';
 import {UpdateParallelTaskEvent} from '../../../../events/update-parallel-task.event';
 import {Subject, BehaviorSubject} from 'rxjs';
@@ -27,7 +27,7 @@ import {BoardHeaders} from '../../../../view-model/board/board-headers';
   styleUrls: ['./rank-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RankViewComponent extends FixedHeaderView implements OnInit, OnChanges, OnDestroy {
+export class RankViewComponent extends FixedHeaderViewAbstractComponent implements OnInit, OnChanges, OnDestroy {
 
   readonly viewMode = BoardViewMode.RANK;
 

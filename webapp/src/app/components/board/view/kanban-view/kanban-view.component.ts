@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, NgZone, OnDestroy, OnInit, Output} from '@angular/core';
-import {FixedHeaderView} from '../fixed-header-view';
+import {FixedHeaderViewAbstractComponent} from '../fixed-header-view';
 import {BoardHeader} from '../../../../view-model/board/board-header';
 import {BoardViewMode} from '../../../../model/board/user/board-view-mode';
 import {UpdateParallelTaskEvent} from '../../../../events/update-parallel-task.event';
@@ -14,7 +14,7 @@ import {takeUntil} from 'rxjs/operators';
   styleUrls: ['./kanban-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class KanbanViewComponent extends FixedHeaderView implements OnInit, OnDestroy {
+export class KanbanViewComponent extends FixedHeaderViewAbstractComponent implements OnInit, OnDestroy {
 
   @Output()
   toggleCollapsedSwimlane: EventEmitter<string> = new EventEmitter<string>();

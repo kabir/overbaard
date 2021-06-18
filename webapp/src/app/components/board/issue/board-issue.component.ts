@@ -31,7 +31,7 @@ import {LinkedIssue} from '../../../model/board/data/issue/linked-issue';
   styleUrls: ['./board-issue.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BoardIssueComponent implements OnInit, OnChanges, AfterViewInit {
+export class BoardIssueComponent implements OnChanges {
 
   readonly noAssignee: Assignee = NO_ASSIGNEE;
 
@@ -60,9 +60,6 @@ export class BoardIssueComponent implements OnInit, OnChanges, AfterViewInit {
 
   constructor(public menuDialog: MatDialog, private _boardService: BoardService/*, private _elementRef: ElementRef*/) { }
 
-  ngOnInit() {
-  }
-
   ngOnChanges(changes: SimpleChanges): void {
     const issue: SimpleChange = changes['issue'];
     if (issue && issue.currentValue !== issue.previousValue) {
@@ -70,9 +67,8 @@ export class BoardIssueComponent implements OnInit, OnChanges, AfterViewInit {
     }
   }
 
+  /*
   ngAfterViewInit(): void {
-
-    /*
     // Debug code only
     // This compares the measured height with the calculated height. Only enable this when that area is problematic,
     // as it has a performance overhead, which slows down the virtual scrolling.
@@ -90,8 +86,7 @@ export class BoardIssueComponent implements OnInit, OnChanges, AfterViewInit {
     } else {
       console.log(s);
     }
-    */
-  }
+  }*/
 
   get showSummary(): boolean {
     return this.issueDetailState.issueSummaryLevel > IssueSummaryLevel.HEADER_ONLY;

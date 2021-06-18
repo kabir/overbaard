@@ -11,7 +11,7 @@ import {BoardHeader} from '../../../view-model/board/board-header';
 import {Component} from '@angular/core';
 
 @Component({template: ''})
-export class FixedHeaderView implements OnChanges {
+export class FixedHeaderViewAbstractComponent implements OnChanges {
 
   @Input()
   board: BoardViewModel;

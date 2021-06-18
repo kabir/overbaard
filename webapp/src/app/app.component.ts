@@ -24,7 +24,7 @@ import {ToolbarTitleService} from './services/toolbar-title.service';
   styleUrls: ['./app.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppComponent implements OnInit, AfterViewInit {
+export class AppComponent implements OnInit {
 
   readonly toolbarHeight: number = TOOLBAR_HEIGHT;
 
@@ -83,9 +83,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     // TODO For some reason this does not work
     config.panelClass = logEntry.error ? ['error-log'] : undefined;
     return this._snackBar.open(logEntry.message, 'Close', config);
-  }
-
-  ngAfterViewInit(): void {
   }
 
   /**

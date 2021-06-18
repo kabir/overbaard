@@ -11,7 +11,7 @@ import {UpdateParallelTaskEvent} from '../../../events/update-parallel-task.even
   styleUrls: ['./parallel-task.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ParallelTaskComponent implements OnInit {
+export class ParallelTaskComponent {
 
   @Input()
   groupIndex: number;
@@ -26,9 +26,6 @@ export class ParallelTaskComponent implements OnInit {
   updateParallelTask: EventEmitter<UpdateParallelTaskEvent> = new EventEmitter<UpdateParallelTaskEvent>();
 
   constructor(public parallelTaskDialog: MatDialog) {
-  }
-
-  ngOnInit(): void {
   }
 
   get parallelTask(): ParallelTask {

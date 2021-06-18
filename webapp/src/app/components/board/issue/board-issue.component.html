@@ -1,8 +1,8 @@
 <mat-card
   [class.search-non-match]="!issue.matchesSearch"
-  [class.mat-elevation-z5]="viewMode == viewModeEnum.KANBAN"
-  [class.rank-view-margin]="viewMode == viewModeEnum.RANK"
-  [class.kanban-view-margin]="viewMode == viewModeEnum.KANBAN">
+  [class.mat-elevation-z5]="viewMode === viewModeEnum.KANBAN"
+  [class.rank-view-margin]="viewMode === viewModeEnum.RANK"
+  [class.kanban-view-margin]="viewMode === viewModeEnum.KANBAN">
   <mat-card-title class="issue" (mouseenter)="calculateTooltips()">
     <div class="title-container">
       <span class="title-container"

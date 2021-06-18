@@ -10,7 +10,7 @@ import {Map} from 'immutable';
   styleUrls: ['./kanban-normal-view.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class KanbanNormalViewComponent implements OnInit {
+export class KanbanNormalViewComponent {
 
   @Input()
   board: BoardViewModel;
@@ -34,9 +34,6 @@ export class KanbanNormalViewComponent implements OnInit {
   updateParallelTask: EventEmitter<UpdateParallelTaskEvent> = new EventEmitter<UpdateParallelTaskEvent>();
 
   constructor() {
-  }
-
-  ngOnInit() {
   }
 
   // trackBy is a hint to angular to be able to keep (i.e. don't destroy and recreate) as many components as possible

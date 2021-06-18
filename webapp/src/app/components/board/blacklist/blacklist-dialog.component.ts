@@ -9,7 +9,7 @@ import {UrlService} from '../../../services/url.service';
   styleUrls: ['./blacklist-dialog.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BlacklistDialogComponent implements OnInit {
+export class BlacklistDialogComponent {
 
   blacklist: BlacklistState;
   constructor(
@@ -18,9 +18,6 @@ export class BlacklistDialogComponent implements OnInit {
     private _urlService: UrlService) {
 
     this.blacklist = data['blacklist'];
-  }
-
-  ngOnInit(): void {
   }
 
   issueUrl(key: string): string {

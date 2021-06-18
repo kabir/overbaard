@@ -16,7 +16,7 @@ import {SAME_CHAR_WIDTH_LOOKUP_TABLE} from './lookup-table';
   styles: [],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FontMeasureComponent implements OnInit, AfterViewInit {
+export class FontMeasureComponent implements AfterViewInit {
 
   @ViewChild('myCanvas') myCanvas: ElementRef;
 
@@ -41,10 +41,6 @@ export class FontMeasureComponent implements OnInit, AfterViewInit {
       this.sizeArray.push(i);
     }
   }
-
-  ngOnInit(): void {
-  }
-
 
   ngAfterViewInit(): void {
     console.log('Starting font calculation');

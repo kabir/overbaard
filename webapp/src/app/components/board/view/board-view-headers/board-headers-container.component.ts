@@ -19,7 +19,7 @@ import {BoardViewMode} from '../../../../model/board/user/board-view-mode';
   styleUrls: ['./board-headers-container.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BoardHeadersContainerComponent implements OnInit {
+export class BoardHeadersContainerComponent {
 
   @Input()
   headers: BoardHeaders;
@@ -41,9 +41,6 @@ export class BoardHeadersContainerComponent implements OnInit {
 
 
   constructor() { }
-
-  ngOnInit() {
-  }
 
   onToggleVisibility(header: BoardHeader) {
     this.toggleColumnVisibility.emit(header);
