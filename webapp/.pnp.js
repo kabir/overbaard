@@ -64,7 +64,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/underscore", "npm:1.11.2"],
             ["@typescript-eslint/eslint-plugin", "virtual:9d06b154c07eb85f179d5ba1e0e9a43d56ff568b58952fba1a576f66a88e9620fa68fe83dc941ef9477d73e30b2f85aeee39cb32bd7ddda09a28f7b436e9d97a#npm:4.23.0"],
             ["@typescript-eslint/parser", "virtual:9d06b154c07eb85f179d5ba1e0e9a43d56ff568b58952fba1a576f66a88e9620fa68fe83dc941ef9477d73e30b2f85aeee39cb32bd7ddda09a28f7b436e9d97a#npm:4.23.0"],
-            ["core-js", "npm:2.6.12"],
             ["eslint", "npm:7.28.0"],
             ["hammerjs", "npm:2.0.8"],
             ["immutable", "npm:3.8.2"],
@@ -3369,7 +3368,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [
             ["@types/glob", "npm:7.1.3"],
             ["@types/minimatch", "npm:3.0.4"],
-            ["@types/node", "npm:8.9.5"]
+            ["@types/node", "npm:12.20.15"]
           ],
           "linkType": "HARD",
         }]
@@ -3415,13 +3414,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/node", "npm:15.12.2"]
           ],
           "linkType": "HARD",
-        }],
-        ["npm:8.9.5", {
-          "packageLocation": "./.yarn/cache/@types-node-npm-8.9.5-59fdae46c4-0c7437fc61.zip/node_modules/@types/node/",
-          "packageDependencies": [
-            ["@types/node", "npm:8.9.5"]
-          ],
-          "linkType": "HARD",
         }]
       ]],
       ["@types/parse-json", [
@@ -3465,7 +3457,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/@types-webpack-sources-npm-0.1.8-74ba37a4ac-b9b5293b62.zip/node_modules/@types/webpack-sources/",
           "packageDependencies": [
             ["@types/webpack-sources", "npm:0.1.8"],
-            ["@types/node", "npm:8.9.5"],
+            ["@types/node", "npm:12.20.15"],
             ["@types/source-list-map", "npm:0.1.2"],
             ["source-map", "npm:0.6.1"]
           ],
@@ -5423,13 +5415,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]
       ]],
       ["core-js", [
-        ["npm:2.6.12", {
-          "packageLocation": "./.yarn/unplugged/core-js-npm-2.6.12-0b93d77d31/node_modules/core-js/",
-          "packageDependencies": [
-            ["core-js", "npm:2.6.12"]
-          ],
-          "linkType": "HARD",
-        }],
         ["npm:3.12.0", {
           "packageLocation": "./.yarn/unplugged/core-js-npm-3.12.0-86ddce2306/node_modules/core-js/",
           "packageDependencies": [
@@ -8470,7 +8455,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/jest-worker-npm-26.6.2-46cbcd449f-5eb349833b.zip/node_modules/jest-worker/",
           "packageDependencies": [
             ["jest-worker", "npm:26.6.2"],
-            ["@types/node", "npm:8.9.5"],
+            ["@types/node", "npm:12.20.15"],
             ["merge-stream", "npm:2.0.0"],
             ["supports-color", "npm:7.2.0"]
           ],
@@ -10142,7 +10127,6 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/underscore", "npm:1.11.2"],
             ["@typescript-eslint/eslint-plugin", "virtual:9d06b154c07eb85f179d5ba1e0e9a43d56ff568b58952fba1a576f66a88e9620fa68fe83dc941ef9477d73e30b2f85aeee39cb32bd7ddda09a28f7b436e9d97a#npm:4.23.0"],
             ["@typescript-eslint/parser", "virtual:9d06b154c07eb85f179d5ba1e0e9a43d56ff568b58952fba1a576f66a88e9620fa68fe83dc941ef9477d73e30b2f85aeee39cb32bd7ddda09a28f7b436e9d97a#npm:4.23.0"],
-            ["core-js", "npm:2.6.12"],
             ["eslint", "npm:7.28.0"],
             ["hammerjs", "npm:2.0.8"],
             ["immutable", "npm:3.8.2"],
